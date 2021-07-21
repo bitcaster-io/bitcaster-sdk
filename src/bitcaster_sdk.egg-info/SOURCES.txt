@@ -1,0 +1,7 @@
+setup.py
+src/bitcaster_sdk/__init__.py
+src/bitcaster_sdk.egg-info/PKG-INFO
+src/bitcaster_sdk.egg-info/SOURCES.txt
+src/bitcaster_sdk.egg-info/dependency_links.txt
+src/bitcaster_sdk.egg-info/requires.txt
+src/bitcaster_sdk.egg-info/top_level.txt

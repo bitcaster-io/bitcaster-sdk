@@ -1,0 +1,6 @@
+.*
+poetry.lock
+dist
+!.github
+!.flake8
+!.gitignore
