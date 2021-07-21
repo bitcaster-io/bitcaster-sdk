@@ -1,6 +1,9 @@
 name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
 
-on: push
+on:
+  push:
+    branches:
+      - master
 
 jobs:
   build-n-publish:
@@ -9,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v2
         with:
           python-version: 3.7
       - name: Install pypa/build
