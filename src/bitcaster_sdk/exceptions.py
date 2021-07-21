@@ -1,5 +1,6 @@
 from json import JSONDecodeError
 
+import humanfriendly
 import requests
 
 
@@ -66,5 +67,10 @@ class RemoteValidationError(RemoteAPIException):
         return self.message % {'status_code': self.response.status_code,
                                'detail': info.get('error', '')}
 
+
 class Http404(RemoteAPIException):
+    pass
+
+
+class TooManyRequestsError(RemoteAPIException):
     pass

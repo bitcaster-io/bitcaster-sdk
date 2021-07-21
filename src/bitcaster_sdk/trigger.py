@@ -3,6 +3,7 @@ from typing import Any
 
 from bitcaster_sdk.exceptions import (AuthenticationError, ConfigurationError,
                                       StreamNotFound)
+
 from .logging import logger
 from .transport import Transport
 

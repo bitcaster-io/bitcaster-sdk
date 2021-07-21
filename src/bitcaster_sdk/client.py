@@ -3,6 +3,7 @@ from typing import Any
 
 from bitcaster_sdk.exceptions import (AuthenticationError, ConfigurationError,
                                       StreamNotFound)
+
 from .logging import logger
 from .transport import Transport
 
@@ -55,7 +56,7 @@ class Client(AbstractClient):
             raise ConnectionError(response.status_code, response.url)
 
     def ping(self):
-        response = self.transport.get('')
+        response = self.transport.get('/api/system/ping/')
         self.assert_response(response)
 
     def empty(self):

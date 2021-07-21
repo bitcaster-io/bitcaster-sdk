@@ -1,11 +1,9 @@
-import json
-from functools import wraps
+from urllib.parse import urlencode, urlparse
+
 from requests import Session
-from urllib.parse import ParseResult, urlencode, urlparse
 
 from .client import AbstractClient
-from .exceptions import RemoteAPIException, Http404, RateLimited, RemoteValidationError
-
+from .exceptions import Http404, RemoteAPIException
 from .logging import logger
 
 
@@ -13,32 +11,6 @@ def avoid_double_slash(path):
     parts = path.split('/')
     not_empties = [part for part in parts if part]
     return '/'.join(not_empties)
-
-
-def extends(f):
-    @wraps(f)
-    def _inner(*args, **kwargs):
-        serialize = kwargs.pop('serialize', None)
-        fields = kwargs.pop('_fields', None)
-        raw = kwargs.pop('_raw', None)
-        ret = f(*args, **kwargs)
-        if ret.status_code >= 500:
-            raise RemoteAPIException(ret)
-        if ret.status_code == 429:
-            raise TooManyRequestsError(ret)
-        if ret.status_code >= 400:
-            logger.error(ret.content)
-            raise RemoteValidationError(ret)
-        if raw:
-            return ret
-        data = ret.json()
-        if fields:
-            data = [{k: record[k] for k in fields} for record in data]
-        if serialize:
-            data = mark_safe(json.dumps(data))
-        return data
-
-    return _inner
 
 
 class Bitcaster(AbstractClient):
@@ -165,16 +137,13 @@ class Bitcaster(AbstractClient):
         res = self._get(f'm/{member_id}/aa/?{urlencode(filters)}')
         return res.json()
 
-    @extends
     def get_assignment(self, member_id, asm_id):
         return self._get(f'm/{member_id}/aa/{asm_id}/')
 
-    @extends
     def send_code_for_assignment(self, member_id, asm_id, **extras):
         payload = dict(extras)
         return self._post(f'm/{member_id}/aa/{asm_id}/send_code/', payload)
 
-    @extends
     def send_code_for_channel(self, member_id, address_id, channel_id, **extras):
         payload = dict(extras)
         payload['channel_id'] = channel_id
@@ -184,15 +153,12 @@ class Bitcaster(AbstractClient):
         url = f'{self.host}/validate/?r=json&k={otp}'
         return self._get(url)
 
-    @extends
     def verify_assignment(self, member_id, assignment_id):
         return self._post(f'm/{member_id}/aa/{assignment_id}/verify/', {})
 
-    @extends
     def verify_multi(self, member_id, code):
         return self._post(f'm/{member_id}/aa/verify_multi/', {'code': code})
 
-    @extends
     def verify_code(self, member_id, assignment_id):
         return self._post(f'm/{member_id}/aa/{assignment_id}/verify/', {})
 
@@ -205,15 +171,12 @@ class Bitcaster(AbstractClient):
     #                   {'channel_id': channel_id,
     #                    'code': code})
 
-    # @extends
     def create_assignment(self, member_id, **data):
         return self._post(f'm/{member_id}/aa/', data)
 
-    @extends
     def patch_assignment(self, member_id, id, **data):
         return self._patch(f'm/{member_id}/aa/{id}/', data)
 
-    @extends
     def filter_addresses(self, member_id, **filters):
         return self._get(f'm/{member_id}/a/?{urlencode(filters)}')
 
@@ -226,15 +189,12 @@ class Bitcaster(AbstractClient):
     def delete_org_address(self, id):
         return self._delete(f'addrs/{id}/')
 
-    @extends
     def get_address(self, member_id, id):
         return self._get(f'm/{member_id}/a/{id}/')
 
-    @extends
     def validate_address(self, member_id, id, **data):
         return self._post(f'm/{member_id}/a/{id}/validate/', data)
 
-    @extends
     def patch_address(self, member_id, id, **data):
         return self._patch(f'm/{member_id}/a/{id}/', data)
 

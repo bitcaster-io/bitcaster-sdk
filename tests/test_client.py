@@ -7,31 +7,23 @@ import os
 from time import sleep
 from urllib.parse import urlparse
 
-from requests.exceptions import ConnectionError
 import pytest
 import responses
-
 from bitcaster_sdk.client import Client
-
-
-@pytest.fixture()
-def client():
-    aep = os.environ.get('BITCASTER_AEP',
-                         "http://key-xxxxxxxx@localhost:8000/api/o/bitcaster/a/38/"
-                         )
-    return Client(bae=aep, debug=True)
-
+from requests.exceptions import ConnectionError
 
 #
-# # @responses.activate
-# def test_init(client: Client):
-#     responses.add(responses.GET, 'http://localhost:8000/api/o/bitcaster/a/38/',
-#                   json={'error': 'not found'}, status=200)
-#     res = client.ping()
-
-
-def test_post(mocked_responses, client: Client):
-    mocked_responses.add(responses.POST,
+# @pytest.fixture()
+# def client():
+#     aep = os.environ.get('BITCASTER_AEP',
+#                          "http://key-xxxxxxxx@localhost:8000/api/o/bitcaster/a/38/"
+#                          )
+#     return Client(bae=aep, debug=True)
+#
+#
+def test_post(client_setup):
+    responses, client = client_setup
+    responses.add(responses.POST,
                          'http://localhost:8000/api/o/bitcaster/a/38/s/26/trigger/',
                          json={"message": "Event triggered",
                                "stream": "bitcaster_upgraded", "development": False, "id": 71,
@@ -42,20 +34,22 @@ def test_post(mocked_responses, client: Client):
     assert res.status_code == 201
 
 
-def test_no_answer(mocked_responses, client: Client):
+def test_no_answer(client_setup):
+    responses, client = client_setup
     client.transport.conn = urlparse('http://sss')
     with pytest.raises(ConnectionError):
         client.send(stream=26, context={})
 
 
-def test_queue(mocked_responses, client: Client):
+def test_queue(client_setup):
+    responses, client = client_setup
     def request_callback(request):
         client.terminate()
         return (201, {}, json.dumps({"message": "Event triggered",
                                      "stream": "bitcaster_upgraded", "development": False, "id": 71,
                                      "timestamp": "2020-10-19T17:13:09.268698Z"}))
 
-    mocked_responses.add_callback(
+    responses.add_callback(
         responses.POST, 'http://localhost:8000/api/o/bitcaster/a/38/s/26/trigger/',
         callback=request_callback,
         content_type='application/json',

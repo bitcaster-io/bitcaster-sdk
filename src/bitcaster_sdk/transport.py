@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 import requests
 
 from .logging import logger
-from .worker import BackgroundWorker, SynchronousWorker
+from .worker import SynchronousWorker
 
 
 class Transport:
@@ -20,7 +20,10 @@ class Transport:
         self.thread.start()
 
     def get_url(self, path):
-        return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
+        if path.startswith('/'):
+            return f"{self.conn.scheme}://{self.conn.netloc}{path}"
+        else:
+            return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
 
     @contextmanager
     def with_headers(self, values: dict):

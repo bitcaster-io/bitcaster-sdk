@@ -3,8 +3,10 @@ import os
 import threading
 from queue import Full, Queue
 from time import sleep, time
-from requests.exceptions import (ConnectionError, HTTPError)
-from typing import Optional, Callable
+from typing import Callable, Optional
+
+from requests.exceptions import ConnectionError, HTTPError
+
 from .logging import logger
 
 _TERMINATOR = object()
@@ -61,6 +63,7 @@ class SynchronousWorker(AbstractWorker):
 
     def terminate(self):
         return True
+
 
 class BackgroundWorker(AbstractWorker):
     def __init__(self, options: dict = None):
