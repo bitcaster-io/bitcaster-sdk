@@ -1,6 +1,7 @@
 .*
 poetry.lock
 dist
+src/*.egg-info
 !.github
 !.flake8
 !.gitignore
