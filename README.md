@@ -20,7 +20,8 @@ How to use it:
     import bitcaster_sdk 
     bitcaster_sdk.init()
 
+
 &#8203;
 
-    from bitcaster_sdk import trigget
+    from bitcaster_sdk import trigger
     trigger(11)
