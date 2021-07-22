@@ -11,8 +11,6 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             -   uses: actions/checkout@v2
-                with:
-                    path: "src/bitcaster_sdk"
 
             -   uses: actions/setup-python@v2
 
@@ -32,10 +30,11 @@ jobs:
                 python-version: [ 3.8, 3.9 ]
         env:
             PY_VER: ${{ matrix.python-version}}
+            BITCASTER_AEP: http://xxxxxxxxxxx@localhost:8000/api/o/bitcaster/a/38/
+            BITCASTER_SDT: http://yyyyyyyyyyy@localhost:8000/api/o/bitcaster/
+
         steps:
             -   uses: actions/checkout@v2
-                with:
-                    path: "src/bitcaster_sdk"
 
             -   name: Set up Python ${{ matrix.python-version }}
                 uses: actions/setup-python@v2
@@ -45,11 +44,10 @@ jobs:
             -   name: Install dependencies
                 run: |
                     python -m pip install --upgrade pip poetry
-                    ls -al
-#                    poetry install
+                    poetry install
 
             -   name: Test with pytest
-                run: poetry run pytest tests/ -v
+                run: poetry run pytest tests/
 
             -   uses: codecov/codecov-action@v1
                 with:

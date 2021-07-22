@@ -3,6 +3,10 @@ name = "bitcaster-sdk"
 version = "0.1.0"
 description = "Python SDK for Bitcaster. Check out GitHub to find out more."
 authors = ["sax <s.apostolico@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/bitcaster-io/bitcaster-sdk.git"
+homepage = " https://github.com/bitcaster-io/bitcaster-sdk"
+keywords = ['bitcaster', ]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -17,16 +21,17 @@ pdbpp = "^0.10.2"
 flake8 = "^3.8.4"
 bump2version = "^1.0.1"
 
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
-
-
 #[build-system]
-#requires = [
+#requires = ["poetry>=0.12"]
+#build-backend = "poetry.masonry.api"
+
+
+[build-system]
+requires = [
 #     sync with setup.py until we discard non-pep-517/518
-#    "setuptools>=42.0",
-#    "setuptools-scm[toml]>=3.4",
-#    "wheel",
-#]
-#build-backend = "setuptools.build_meta"
+    "setuptools>=42.0",
+    "setuptools-scm[toml]>=3.4",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+#
