@@ -1,0 +1,42 @@
+[project]
+name = "bitcaster_sdk"
+version = "0.1.0"
+description = "Bitcaster Python SDK"
+authors = [
+    {name = "sax", email = "s.apostolico@gmail.com"},
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+dependencies = [
+    "requests>=2.31.0",
+    "humanfriendly>=10.0",
+    "click>=8.1.7",
+]
+
+[project.scripts]
+bitcaster = "bitcaster_sdk:__main__.cli"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "pytest>=8.1.1",
+    "pytest-coverage>=0.0",
+    "responses>=0.25.0",
+    "isort>=5.13.2",
+    "pdbpp>=0.10.3",
+    "flake8>=7.0.0",
+    "bump2version>=1.0.1",
+    "mypy>=1.9.0",
+    "black>=24.4.0",
+    "pre-commit>=3.7.0",
+]
