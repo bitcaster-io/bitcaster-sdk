@@ -65,8 +65,6 @@ lint:
 bandit:
   image: "$DOCKER_BUILDER"
   stage: scan-code
-  services:
-    - docker:dind
   cache:
     paths:
       - .trivy-cache
@@ -82,40 +80,6 @@ bandit:
       - bandit.html
     expire_in: 4 weeks
 
-trivy-code:
-  image: "$DOCKER_BUILDER"
-  stage: scan-code
-  extends:
-    - .docker-rules
-  services:
-    - docker:dind
-  cache:
-    paths:
-      - .trivy-cache
-  before_script:
-    - *exports
-    - export DOCKER_IMAGE_TAG="${CI_REGISTRY_IMAGE}/builder:${BC_LOCK_SHA}"
-  script:
-    - *login
-    - echo "Scanning $DOCKER_IMAGE_TAG"
-    - trivy
-      --cache-dir .trivy-cache
-      image
-      --exit-code 0
-      --vuln-type library
-      --no-progress
-      --format template
-      --template "@/templates/gitlab.tpl"
-      -o trivy-code.json
-      ${DOCKER_IMAGE_TAG}
-  artifacts:
-    when: always
-    reports:
-      container_scanning: trivy-code.json
-      junit: trivy-code.xml
-    paths:
-      - public
-    expire_in: 4 weeks
 
 test:
   stage: test
@@ -128,7 +92,6 @@ test:
     COVERAGE_RCFILE: "tests/.coveragerc"
   before_script:
     - *exports
-    - export DOCKER_IMAGE_TAG="${CI_REGISTRY_IMAGE}/builder:${BC_LOCK_SHA}"
   script:
     - |
       # some info
