@@ -26,6 +26,7 @@ stages:
     - if: '$CI_COMMIT_MESSAGE=~ /CI:(retest|force test)/'
       when: always
     - changes:
+        - .gitlab-ci.yml
         - src/**/*
         - tests/**/*
         - pyproject.toml
