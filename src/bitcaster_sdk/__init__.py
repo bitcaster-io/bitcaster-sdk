@@ -1,10 +1,10 @@
 import os
 from typing import Optional
 
-from .api import trigger, list_events
+from .api import trigger, list_events, ping
 from .logging import logger
 
-__all__ = ('trigger', 'list_events')
+__all__ = ('trigger', 'list_events', 'ping')
 
 
 def init(bae: Optional[str] = None, *args, **kwargs):

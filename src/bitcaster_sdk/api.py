@@ -11,4 +11,8 @@ def list_events():
     return client.client.list_events()
 
 
+def ping():
+    return client.client.ping()
+
+
 del client

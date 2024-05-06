@@ -25,7 +25,7 @@ def test_trigger(client_setup, base_url):
     assert res["message"] == "Event triggered"
 
 
-def test_trigger(client_setup, base_url):
+def test_ping(base_url):
     responses, client = client_setup
     responses.add(
         responses.POST,
@@ -40,7 +40,7 @@ def test_trigger(client_setup, base_url):
         status=201,
     )
 
-    res = client.trigger("pippo", context={})
+    res = client.ping("pippo", context={})
     assert res["message"] == "Event triggered"
 
 

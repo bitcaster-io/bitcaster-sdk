@@ -8,7 +8,7 @@ import bitcaster_sdk
 from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import AuthenticationError
 
-# client: Optional["Client"] = None
+client: Optional["Client"] = None
 
 def avoid_double_slash(path):
     parts = path.split('/')
@@ -23,8 +23,10 @@ def clean_bae(bae: str):
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
 def cli(bae: str):
+    global client
     try:
         bitcaster_sdk.init(clean_bae(bae))
+        client = bitcaster_sdk.client.client
     except Exception as e:
         raise click.ClickException(f"Failed to initialize bitcaster. {e}")
 
@@ -33,7 +35,7 @@ def cli(bae: str):
 def list_():
     FMT = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
     try:
-        ret = bitcaster_sdk.list_events()
+        ret = client.list_events()
         secho(FMT.format("#", "Name", "Slug", "active", "locked", "description"))
         for n, e in enumerate(ret, 1):
             cl = "white"
@@ -70,7 +72,7 @@ def ping():
     except AuthenticationError as e:
         raise click.ClickException(str(e))
     except Exception as e:
-        raise click.ClickException(f"Unable to contact server {client.base_url}")
+        raise click.ClickException(str(e))
 
 
 @click.argument("event")
