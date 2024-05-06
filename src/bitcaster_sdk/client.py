@@ -27,16 +27,6 @@ class Client(AbstractClient):
                 r"p\/(?P<project>.+)\/" \
                 r"a\/(?P<application>.+)(\/?)"
 
-    @staticmethod
-    def init(bae, *args, **kwargs):
-        if not bae:
-            bae = os.environ.get('BITCASTER_BAE', "")
-        bae = bae.strip()
-        if not bae:
-            raise RuntimeError('Set BITCASTER_AEP environment variable')
-
-        return Client(bae, *args, **kwargs)
-
     def __init__(self, bae: str, debug: Optional[bool] = False, *args, **kwargs):
         self.bae = bae
         self.options = {'debug': debug, 'shutdown_timeout': 10}
@@ -100,4 +90,4 @@ class Client(AbstractClient):
         self.transport.thread.terminate()
 
 
-client = Client()
+client: Optional[Client] = None

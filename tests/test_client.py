@@ -25,6 +25,25 @@ def test_trigger(client_setup, base_url):
     assert res["message"] == "Event triggered"
 
 
+def test_trigger(client_setup, base_url):
+    responses, client = client_setup
+    responses.add(
+        responses.POST,
+        f"{base_url}/e/pippo/trigger/",
+        json={
+            "message": "Event triggered",
+            "stream": "bitcaster_upgraded",
+            "development": False,
+            "id": 71,
+            "timestamp": "2020-10-19T17:13:09.268698Z",
+        },
+        status=201,
+    )
+
+    res = client.trigger("pippo", context={})
+    assert res["message"] == "Event triggered"
+
+
 def test_no_answer(client):
     client.transport.conn = urlparse("http://sss")
     with pytest.raises(requests.ConnectionError):

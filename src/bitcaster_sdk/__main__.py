@@ -8,9 +8,12 @@ import bitcaster_sdk
 from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import AuthenticationError
 
-client: Optional["Client"] = None
+# client: Optional["Client"] = None
 
-
+def avoid_double_slash(path):
+    parts = path.split('/')
+    not_empties = [part for part in parts if part]
+    return '/'.join(not_empties)
 def clean_bae(bae: str):
     while len(bae) > 0 and bae[-1] == "/":
         bae = bae[:-1]
@@ -20,10 +23,8 @@ def clean_bae(bae: str):
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
 def cli(bae: str):
-    global client
     try:
         bitcaster_sdk.init(clean_bae(bae))
-        client = bitcaster_sdk.client.client
     except Exception as e:
         raise click.ClickException(f"Failed to initialize bitcaster. {e}")
 
@@ -32,7 +33,7 @@ def cli(bae: str):
 def list_():
     FMT = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
     try:
-        ret = client.list_events()
+        ret = bitcaster_sdk.list_events()
         secho(FMT.format("#", "Name", "Slug", "active", "locked", "description"))
         for n, e in enumerate(ret, 1):
             cl = "white"

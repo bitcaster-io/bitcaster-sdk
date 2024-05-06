@@ -3,8 +3,11 @@ import os
 import pytest
 import responses
 
-from bitcaster_sdk.client import Client
-from bitcaster_sdk.sdk import Bitcaster
+import bitcaster_sdk
+
+
+# from bitcaster_sdk.client import Client
+# from bitcaster_sdk.sdk import Bitcaster
 
 
 class FakeRequestsMock:
@@ -95,6 +98,8 @@ def sdk_setup():
 
 @pytest.fixture(scope="function")
 def client(aep):
+    from bitcaster_sdk.client import Client
+
     return Client(aep)
 
 
