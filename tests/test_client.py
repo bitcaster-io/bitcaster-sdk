@@ -1,70 +1,70 @@
-import json
-from time import sleep
-from urllib.parse import urlparse
-
 import pytest
-import requests
+from typing import TYPE_CHECKING
+
+from bitcaster_sdk.exceptions import ConfigurationError
+
+if TYPE_CHECKING:
+    from bitcaster_sdk.client import Client
 
 
-def test_trigger(client_setup, base_url):
+def test_trigger(client_setup):
     responses, client = client_setup
+    url = f"{client.base_url}e/a1/trigger/"
     responses.add(
         responses.POST,
-        f"{base_url}/e/pippo/trigger/",
-        json={
-            "message": "Event triggered",
-            "stream": "bitcaster_upgraded",
-            "development": False,
-            "id": 71,
-            "timestamp": "2020-10-19T17:13:09.268698Z",
-        },
+        url,
+        json={"occurrence": 15},
         status=201,
     )
+    res = client.trigger("a1", context={})
+    assert res == {"occurrence": 15}
 
-    res = client.trigger("pippo", context={})
-    assert res["message"] == "Event triggered"
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception):
+        client.trigger("a1", context={})
 
 
-def test_ping(base_url):
+def test_ping(client_setup: "[Any, Client]", monkeypatch):
     responses, client = client_setup
+    responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
+
+    res = client.ping()
+    assert res == {"token": "Key1", "slug": "core"}
+
+    responses.add(responses.GET, f"{client.api_url}system/ping/", body=Exception(""))
+    with pytest.raises(Exception):
+        client.ping()
+
+
+def test_list_events(client_setup: "[Any, Client]"):
+    responses, client = client_setup
+    url = f"{client.base_url}e/"
     responses.add(
-        responses.POST,
-        f"{base_url}/e/pippo/trigger/",
-        json={
-            "message": "Event triggered",
-            "stream": "bitcaster_upgraded",
-            "development": False,
-            "id": 71,
-            "timestamp": "2020-10-19T17:13:09.268698Z",
-        },
-        status=201,
+        responses.GET,
+        url,
+        json=[
+            {
+                "active": True,
+                "application": 2,
+                "channels": [10],
+                "description": None,
+                "id": 9,
+                "locked": False,
+                "name": "Test Event",
+                "newsletter": False,
+                "slug": "test-event",
+            }
+        ],
     )
 
-    res = client.ping("pippo", context={})
-    assert res["message"] == "Event triggered"
+    res = client.list_events()
+    assert res[0]["active"]
+
+    responses.add(responses.GET, url, body=Exception(""))
+    with pytest.raises(Exception):
+        client.list_events()
 
 
-def test_no_answer(client):
-    client.transport.conn = urlparse("http://sss")
-    with pytest.raises(requests.ConnectionError):
-        client.send("pippo", context={})
-
-
-#
-# def test_queue(client_setup, base_url):
-#     responses, client = client_setup
-#     def request_callback(request):
-#         client.terminate()
-#         return (201, {}, json.dumps({"message": "Event triggered",
-#                                      "stream": "bitcaster_upgraded", "development": False, "id": 71,
-#                                      "timestamp": "2020-10-19T17:13:09.268698Z"}))
-#
-#     responses.add_callback(
-#         responses.POST, f'{base_url}e/pippo/queue/',
-#         callback=request_callback,
-#         content_type='application/json',
-#     )
-#     client.queue("pippo", context={'a': 1})
-#     client.queue("pippo", context={'a': 2})
-#     while not client.empty():
-#         sleep(1)
+def test_client_parse_url(client: "Client"):
+    with pytest.raises(ConfigurationError):
+        assert client.parse_url("")

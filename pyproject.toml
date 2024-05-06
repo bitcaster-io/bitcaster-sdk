@@ -40,3 +40,27 @@ dev = [
     "black>=24.4.0",
     "pre-commit>=3.7.0",
 ]
+
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | migrations
+  | snapshots
+)/
+'''

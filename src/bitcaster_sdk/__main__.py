@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 import click
@@ -10,10 +9,7 @@ from bitcaster_sdk.exceptions import AuthenticationError
 
 client: Optional["Client"] = None
 
-def avoid_double_slash(path):
-    parts = path.split('/')
-    not_empties = [part for part in parts if part]
-    return '/'.join(not_empties)
+
 def clean_bae(bae: str):
     while len(bae) > 0 and bae[-1] == "/":
         bae = bae[:-1]
@@ -60,8 +56,7 @@ def list_():
     except AuthenticationError as e:
         raise click.ClickException(str(e))
     except Exception as e:
-        raise
-        raise click.ClickException(f"Unable to contact server {client.base_url}")
+        raise click.ClickException(str(e))
 
 
 @cli.command()
@@ -90,7 +85,7 @@ def trigger(event, context, options, debug):
     except AuthenticationError as e:
         raise click.ClickException(str(e))
     except Exception as e:
-        raise click.ClickException(f"Unable to contact server {client.base_url}")
+        raise click.ClickException(str(e))
 
 
 if __name__ == "__main__":

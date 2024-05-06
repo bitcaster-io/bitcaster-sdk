@@ -1,4 +1,6 @@
 import os
+from unittest.mock import MagicMock
+from urllib.parse import urlparse, urlsplit
 
 import pytest
 import responses
@@ -31,79 +33,24 @@ class BitcasterRequestsMock:
 
 
 def pytest_configure(config):
-    os.environ["BITCASTER_BAE"] = (
-        "http://key-1@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
-    )
+    # os.environ["BITCASTER_BAE"] = "http://key-1@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
+    os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
 
 
 @pytest.fixture(scope="function")
-def aep():
+def bae():
     return os.environ["BITCASTER_BAE"]
 
 
 @pytest.fixture(scope="function")
-def base_url():
-    # return os.environ["BITCASTER_BAE"]
-    return "http://app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
-
-
-@pytest.fixture(scope="function")
-def rsps_sdk():
-    # yield FakeRequestsMock()
-    with responses.RequestsMock() as rsps:
-        payload = [
-            {
-                "name": "core",
-                "id": 38,
-                "slug": "core",
-                "timezone": "UTC",
-                "links": {
-                    "streams": "http://localhost:8000/api/o/bitcaster/a/38/s/",
-                    "home": "http://localhost:8000/o/bitcaster/a/core/",
-                },
-            }
-        ]
-        rsps.add(
-            rsps.GET, "http://localhost:8000/api/system/ping/", json=payload, status=200
-        )
-        yield rsps
-
-
-@pytest.fixture(scope="function")
-def rsps_client():
-    # yield FakeRequestsMock()
-    with responses.RequestsMock() as rsps:
-        yield rsps
-
-
-@pytest.fixture(scope="function")
-def sdk_setup():
-    # yield FakeRequestsMock()
-    sdt = os.environ.get(
-        "BITCASTER_SDT", "http://sdk-xxxxxxxxx@localhost:8000/api/o/bitcaster/a/38/"
-    )
-    sdk = Bitcaster(sdt)
-
-    with responses.RequestsMock() as rsps:
-        payload = {
-            "base_api": "http://localhost:8000/api/",
-            "slug": "bitcaster",
-            "org": "Bitcaster",
-        }
-        rsps.add(
-            rsps.GET, "http://localhost:8000/api/system/ping/", json=payload, status=200
-        )
-        yield rsps, sdk
-
-
-@pytest.fixture(scope="function")
-def client(aep):
+def client(bae):
     from bitcaster_sdk.client import Client
 
-    return Client(aep)
+    return Client(bae)
 
 
 @pytest.fixture(scope="function")
 def client_setup(client):
+    # yield MagicMock(), client
     with responses.RequestsMock() as rsps:
         yield rsps, client

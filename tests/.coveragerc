@@ -19,6 +19,8 @@ exclude_lines =
     #if 0:
     if __name__ == .__main__.:
     if django.VERSION[1] < 6:
+    raise
+    logger.exception(e)
 
 ignore_errors = True
 
