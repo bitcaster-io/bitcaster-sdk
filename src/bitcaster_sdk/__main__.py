@@ -1,5 +1,3 @@
-from typing import Optional
-
 import click
 from click import echo, secho
 
@@ -7,8 +5,6 @@ import bitcaster_sdk
 from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import AuthenticationError
 
-# client: Optional["Client"] = None
-#
 
 def clean_bae(bae: str):
     while len(bae) > 0 and bae[-1] == "/":
@@ -19,7 +15,7 @@ def clean_bae(bae: str):
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
 @click.pass_context
-def cli(ctx:click.Context,  bae: str):
+def cli(ctx: click.Context, bae: str):
     global client
     ctx.obj = {}
     try:
