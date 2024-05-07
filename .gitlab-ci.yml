@@ -1,3 +1,7 @@
+variables:
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_BUILDER: "registry.gitlab.com/os4d/docker-builder:2.4"
+
 stages:
   - lint
   - test
