@@ -56,8 +56,8 @@ lint:
   script:
     - echo -e "${TXT_HI_WHITE}Using Docker image ${TXT_HI_GREEN}${CI_JOB_IMAGE}${TXT_RESET}"
     - echo "run lint"
-    - flake8 src/bitcaster --exit-zero --format=html --htmldir flake8/ --statistics --tee
-    - black src/bitcaster --check > black.txt
+    - flake8 src/bitcaster_sdk --exit-zero --format=html --htmldir flake8/ --statistics --tee
+    - black src/bitcaster_sdk --check > black.txt
     - mkdir -p public/junit
     - cp -R flake8 public/
   artifacts:
@@ -101,16 +101,9 @@ test:
     - |
       # some info
       echo "run tests in '${TEST_DIR}'"
-      echo -e "${TXT_HI_WHITE}Using Docker image ${TXT_HI_GREEN}${CI_JOB_IMAGE}${TXT_RESET}"
-      echo "Version  ${BC_VERSION}"
-      echo "Date     ${BC_BUILD_DATE}"
-      echo "Tag      ${DOCKER_IMAGE_TAG}"
-      echo "Checksum `cat /CHECKSUM`"
-      echo "Tag      ${DOCKER_IMAGE_TAG}"
     - pytest tests/
       -ra
       --maxfail 10
-      --migrations
       --junitxml=.build/junit/junit.xml
       --html=.build/junit/report.html
       --cov
