@@ -88,7 +88,7 @@ bandit:
 
 test:
   stage: test
-  image: "${CI_REGISTRY_IMAGE}/builder-test:latest"
+  image: "$DOCKER_BUILDER"
   extends:
     - .test-rules
   variables:
