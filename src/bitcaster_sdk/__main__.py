@@ -7,8 +7,8 @@ import bitcaster_sdk
 from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import AuthenticationError
 
-client: Optional["Client"] = None
-
+# client: Optional["Client"] = None
+#
 
 def clean_bae(bae: str):
     while len(bae) > 0 and bae[-1] == "/":
@@ -18,18 +18,22 @@ def clean_bae(bae: str):
 
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
-def cli(bae: str):
+@click.pass_context
+def cli(ctx:click.Context,  bae: str):
     global client
+    ctx.obj = {}
     try:
         bitcaster_sdk.init(clean_bae(bae))
-        client = bitcaster_sdk.client.client
+        ctx.obj["client"] = bitcaster_sdk.client.client
     except Exception as e:
         raise click.ClickException(f"Failed to initialize bitcaster. {e}")
 
 
 @cli.command(name="list")
-def list_():
+@click.pass_obj
+def list_(ctx: click.Context) -> None:
     FMT = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
+    client = ctx["client"]
     try:
         ret = client.list_events()
         secho(FMT.format("#", "Name", "Slug", "active", "locked", "description"))
@@ -60,7 +64,10 @@ def list_():
 
 
 @cli.command()
-def ping():
+@click.pass_obj
+def ping(ctx: click.Context) -> None:
+    client: "Client" = ctx["client"]
+
     try:
         ret = client.ping()
         echo(ret)
@@ -75,7 +82,10 @@ def ping():
 @click.option("--context", "-c", "context", type=(str, str), multiple=True)
 @click.option("--options", "-o", "options", type=(str, str), multiple=True)
 @cli.command()
-def trigger(event, context, options, debug):
+@click.pass_obj
+def trigger(ctx, event, context, options, debug):
+    client = ctx["client"]
+
     if debug:
         echo(f"Context: {dict(context)}")
         echo(f"Options: {dict(options)}")

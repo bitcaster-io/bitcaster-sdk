@@ -33,8 +33,8 @@ class BitcasterRequestsMock:
 
 
 def pytest_configure(config):
-    # os.environ["BITCASTER_BAE"] = "http://key-1@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
-    os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
+    os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
+    # os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
 
 
 @pytest.fixture(scope="function")

@@ -11,7 +11,7 @@ def init(bae: Optional[str] = None, *args, **kwargs):
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()
     if not bae:
-        raise RuntimeError("Set BITCASTER_AEP environment variable")
+        raise RuntimeError("Set BITCASTER_BAE environment variable")
 
     client.client = client.Client(bae, debug=True, *args, **kwargs)
     return client.client

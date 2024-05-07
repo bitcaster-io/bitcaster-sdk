@@ -2,6 +2,10 @@ class EventNotFound(Exception):
     pass
 
 
+class SDKError(Exception):
+    pass
+
+
 class ConfigurationError(Exception):
     pass
 

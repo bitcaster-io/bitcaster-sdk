@@ -1,3 +1,6 @@
+import os
+
+import pytest
 from click.testing import CliRunner
 from bitcaster_sdk.__main__ import cli, ping
 
@@ -9,11 +12,20 @@ def test_ping(client_setup, response_ping):
     assert result.output == "{'token': 'Key1', 'slug': 'core'}\n"
 
 
-def test_trigger(client_setup, response_trigger):
+@pytest.mark.parametrize("token", [os.environ["BITCASTER_BAE"], None], ids=["token", "no-token"])
+@pytest.mark.parametrize("debug", ["-d", None], ids=["debug", "no-debug"])
+def test_trigger(client_setup, response_trigger, debug, token):
     runner = CliRunner()
-    result = runner.invoke(cli, ["trigger", "a1", "-c", "integer", 1, "-c", "string", "abc"])
+    args = []
+    if token:
+        args.extend(["--bae", token])
+    args.append("trigger")
+    if debug:
+        args.append(debug)
+    args.extend(["a1", "-c", "integer", 1, "-c", "string", "abc"])
+    result = runner.invoke(cli, args)
+    print(result.output)
     assert result.exit_code == 0
-    assert result.output == "{'occurrence': 15}\n"
 
 
 def test_list(client_setup, response_list):

@@ -3,7 +3,7 @@ name = "bitcaster_sdk"
 version = "0.1.0"
 description = "Bitcaster Python SDK"
 authors = [
-    {name = "sax", email = "s.apostolico@gmail.com"},
+    {name = "mark", email = "hanarero@gmail.com"},
 ]
 requires-python = ">=3.9"
 readme = "README.md"

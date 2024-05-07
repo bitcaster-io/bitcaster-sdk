@@ -1,11 +1,17 @@
 import re
 from typing import Optional
 
+import requests.exceptions
+import urllib3.connection
+from requests import HTTPError, RequestException
+from urllib3 import HTTPConnectionPool
+from urllib3.exceptions import NewConnectionError
+
 from bitcaster_sdk.exceptions import (
     AuthenticationError,
     ConfigurationError,
     EventNotFound,
-    ValidationError,
+    ValidationError, SDKError,
 )
 
 from .logging import logger
@@ -73,8 +79,10 @@ class Client:
             self.assert_response(response)
             ret = response.json()
             return ret
+        except requests.exceptions.ConnectionError as e:
+            raise ConnectionError(f"Connection Error: {self.api_url}") from e
         except Exception as e:
-            logger.exception(e)
+            # logger.exception(e)
             raise
 
     def list_events(self):
