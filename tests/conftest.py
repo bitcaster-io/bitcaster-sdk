@@ -54,3 +54,42 @@ def client_setup(client):
     # yield MagicMock(), client
     with responses.RequestsMock() as rsps:
         yield rsps, client
+
+
+@pytest.fixture(scope="function")
+def response_ping(client_setup):
+    responses, client = client_setup
+    responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
+    yield
+
+
+@pytest.fixture(scope="function")
+def response_trigger(client_setup):
+    responses, client = client_setup
+    url = f"{client.base_url}e/a1/trigger/"
+    responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
+    yield url
+
+
+@pytest.fixture(scope="function")
+def response_list(client_setup):
+    responses, client = client_setup
+    url = f"{client.base_url}e/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[
+            {
+                "active": True,
+                "application": 2,
+                "channels": [10],
+                "description": None,
+                "id": 9,
+                "locked": False,
+                "name": "Test Event",
+                "newsletter": False,
+                "slug": "test-event",
+            }
+        ],
+    )
+    yield url

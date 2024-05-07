@@ -7,15 +7,9 @@ if TYPE_CHECKING:
     from bitcaster_sdk.client import Client
 
 
-def test_trigger(client_setup):
+def test_trigger(client_setup, response_trigger):
     responses, client = client_setup
-    url = f"{client.base_url}e/a1/trigger/"
-    responses.add(
-        responses.POST,
-        url,
-        json={"occurrence": 15},
-        status=201,
-    )
+    url = response_trigger
     res = client.trigger("a1", context={})
     assert res == {"occurrence": 15}
 
@@ -24,9 +18,8 @@ def test_trigger(client_setup):
         client.trigger("a1", context={})
 
 
-def test_ping(client_setup: "[Any, Client]", monkeypatch):
+def test_ping(client_setup: "[Any, Client]", monkeypatch, response_ping):
     responses, client = client_setup
-    responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
 
     res = client.ping()
     assert res == {"token": "Key1", "slug": "core"}
@@ -36,27 +29,9 @@ def test_ping(client_setup: "[Any, Client]", monkeypatch):
         client.ping()
 
 
-def test_list_events(client_setup: "[Any, Client]"):
+def test_list_events(client_setup: "[Any, Client]", response_list):
     responses, client = client_setup
-    url = f"{client.base_url}e/"
-    responses.add(
-        responses.GET,
-        url,
-        json=[
-            {
-                "active": True,
-                "application": 2,
-                "channels": [10],
-                "description": None,
-                "id": 9,
-                "locked": False,
-                "name": "Test Event",
-                "newsletter": False,
-                "slug": "test-event",
-            }
-        ],
-    )
-
+    url = response_list
     res = client.list_events()
     assert res[0]["active"]
 
