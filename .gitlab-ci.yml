@@ -43,7 +43,6 @@ stages:
 
 
 lint:
-  image: "${CI_REGISTRY_IMAGE}/builder-test:latest"
   stage: lint
   extends:
     - .test-rules
