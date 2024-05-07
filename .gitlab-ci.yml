@@ -44,6 +44,7 @@ stages:
 
 lint:
   stage: lint
+  image: "$DOCKER_BUILDER"
   extends:
     - .test-rules
   before_script:
