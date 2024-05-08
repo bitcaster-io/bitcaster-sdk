@@ -5,18 +5,12 @@ import bitcaster_sdk
 from bitcaster_sdk.exceptions import AuthenticationError
 
 
-def clean_bae(bae: str):
-    while len(bae) > 0 and bae[-1] == "/":
-        bae = bae[:-1]
-    return bae
-
-
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
 @click.option("--debug", default=False, is_flag=True, envvar="BITCASTER_DEBUG")
 def cli(bae: str, debug: bool):
     try:
-        bitcaster_sdk.init(clean_bae(bae), debug=debug)
+        bitcaster_sdk.init(bae, debug=debug)
     except Exception as e:
         raise click.ClickException(f"Failed to initialize Bitcaster. {e}")
 
@@ -34,7 +28,7 @@ def list_() -> None:
                 cl = "red"
             elif e["active"]:
                 cl = "green"
-            elif not e["active"]:
+            else: # e["active"]:
                 cl = "yellow"
             secho(
                 FMT.format(
@@ -47,9 +41,6 @@ def list_() -> None:
                 ),
                 fg=cl,
             )
-
-    except AuthenticationError as e:
-        raise click.ClickException(str(e))
     except Exception as e:
         raise click.ClickException(str(e))
 
@@ -59,8 +50,6 @@ def ping() -> None:
     try:
         ret = bitcaster_sdk.ping()
         echo(ret)
-    except AuthenticationError as e:
-        raise click.ClickException(str(e))
     except Exception as e:
         raise click.ClickException(str(e))
 
@@ -77,8 +66,6 @@ def trigger(event, context, options, debug):
     try:
         ret = bitcaster_sdk.trigger(event, dict(context), dict(options))
         echo(ret)
-    except AuthenticationError as e:
-        raise click.ClickException(str(e))
     except Exception as e:
         raise click.ClickException(str(e))
 

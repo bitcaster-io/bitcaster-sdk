@@ -118,11 +118,11 @@ ctx.set(Client(None))
 
 def init(bae: Optional[str] = None, **kwargs: Any) -> "Client":
 
-    if not bae:
+    if bae is None:
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()
     if not bae:
-        raise RuntimeError("Set BITCASTER_BAE environment variable")
+        raise ConfigurationError("Set BITCASTER_BAE environment variable")
 
     ctx.set(Client(bae, **kwargs))
     return ctx.get()
