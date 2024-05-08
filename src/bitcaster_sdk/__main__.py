@@ -2,7 +2,6 @@ import click
 from click import echo, secho
 
 import bitcaster_sdk
-from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import AuthenticationError
 
 
@@ -14,24 +13,20 @@ def clean_bae(bae: str):
 
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
-@click.pass_context
-def cli(ctx: click.Context, bae: str):
-    global client
-    ctx.obj = {}
+@click.option("--debug", default=False, is_flag=True, envvar="BITCASTER_DEBUG")
+def cli(bae: str, debug: bool):
     try:
-        bitcaster_sdk.init(clean_bae(bae))
-        ctx.obj["client"] = bitcaster_sdk.client.client
+        bitcaster_sdk.init(clean_bae(bae), debug=debug)
     except Exception as e:
-        raise click.ClickException(f"Failed to initialize bitcaster. {e}")
+        raise click.ClickException(f"Failed to initialize Bitcaster. {e}")
 
 
 @cli.command(name="list")
-@click.pass_obj
-def list_(ctx: click.Context) -> None:
+def list_() -> None:
     FMT = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
-    client = ctx["client"]
+
     try:
-        ret = client.list_events()
+        ret = bitcaster_sdk.list_events()
         secho(FMT.format("#", "Name", "Slug", "active", "locked", "description"))
         for n, e in enumerate(ret, 1):
             cl = "white"
@@ -60,12 +55,9 @@ def list_(ctx: click.Context) -> None:
 
 
 @cli.command()
-@click.pass_obj
-def ping(ctx: click.Context) -> None:
-    client: "Client" = ctx["client"]
-
+def ping() -> None:
     try:
-        ret = client.ping()
+        ret = bitcaster_sdk.ping()
         echo(ret)
     except AuthenticationError as e:
         raise click.ClickException(str(e))
@@ -78,15 +70,12 @@ def ping(ctx: click.Context) -> None:
 @click.option("--context", "-c", "context", type=(str, str), multiple=True)
 @click.option("--options", "-o", "options", type=(str, str), multiple=True)
 @cli.command()
-@click.pass_obj
-def trigger(ctx, event, context, options, debug):
-    client = ctx["client"]
-
+def trigger(event, context, options, debug):
     if debug:
         echo(f"Context: {dict(context)}")
         echo(f"Options: {dict(options)}")
     try:
-        ret = client.trigger(event, dict(context), dict(options))
+        ret = bitcaster_sdk.trigger(event, dict(context), dict(options))
         echo(ret)
     except AuthenticationError as e:
         raise click.ClickException(str(e))

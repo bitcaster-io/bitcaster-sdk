@@ -44,9 +44,9 @@ def bae():
 
 @pytest.fixture(scope="function")
 def client(bae):
-    from bitcaster_sdk.client import Client
+    from bitcaster_sdk import init
 
-    return Client(bae)
+    return init(bae)
 
 
 @pytest.fixture(scope="function")
@@ -84,12 +84,34 @@ def response_list(client_setup):
                 "application": 2,
                 "channels": [10],
                 "description": None,
-                "id": 9,
+                "id": 1,
                 "locked": False,
-                "name": "Test Event",
+                "name": "Test Event #1",
                 "newsletter": False,
-                "slug": "test-event",
-            }
+                "slug": "test-event-1",
+            },
+            {
+                "active": False,
+                "application": 2,
+                "channels": [10],
+                "description": None,
+                "id": 2,
+                "locked": False,
+                "name": "Test Event #2",
+                "newsletter": False,
+                "slug": "test-event-2",
+            },
+            {
+                "active": False,
+                "application": 2,
+                "channels": [10],
+                "description": None,
+                "id": 3,
+                "locked": True,
+                "name": "Test Event #3",
+                "newsletter": False,
+                "slug": "test-event-3",
+            },
         ],
     )
     yield url

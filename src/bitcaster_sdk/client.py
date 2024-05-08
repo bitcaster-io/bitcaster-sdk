@@ -1,7 +1,10 @@
+import os
 import re
-from typing import Optional
+from contextvars import ContextVar
+from typing import Any, Optional
 
 import requests.exceptions
+from requests import Response
 
 from bitcaster_sdk.exceptions import (
     AuthenticationError,
@@ -13,6 +16,8 @@ from bitcaster_sdk.exceptions import (
 from .logging import logger
 from .transport import Transport
 
+ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
+
 
 class Client:
     url_regex = (
@@ -23,22 +28,24 @@ class Client:
         r"a\/(?P<application>.+)"
     )
 
-    def __init__(self, bae: str, debug: Optional[bool] = False, *args, **kwargs):
-        self.bae = bae
-        self.options = {"debug": debug, "shutdown_timeout": 10}
-        self.parse_url(bae)
-        self.transport = Transport(**self.options)
+    def __init__(self, bae: Optional[str] = None, debug: Optional[bool] = False) -> None:
+        self.options: dict[str, Any] = {}
+        self.transport: Optional[Transport] = None
+        if bae is not None:
+            self.bae = bae
+            self.options = {"debug": debug, "shutdown_timeout": 10}
+            self.parse_url(bae)
+            self.transport = Transport(**self.options)
 
-    def parse_url(self, url: str):
+    def parse_url(self, url: str) -> None:
         m = re.compile(self.url_regex).match(url)
         if not m:
-            raise ConfigurationError(f"Unable to parse Bitcaster url: '{url}' url must match {self.url_regex}")
+            raise ConfigurationError(
+                f"""Unable to parse url: '{url}'.
+must match {self.url_regex}"""
+            )
         self.options.update(m.groupdict())
         self.options["base_url"] = self.base_url
-
-    @property
-    def debug(self) -> bool:
-        return self.options["debug"]
 
     @property
     def base_url(self) -> str:
@@ -48,7 +55,7 @@ class Client:
     def api_url(self) -> str:
         return "{schema}://{host}/api/".format(**self.options)
 
-    def assert_response(self, response):
+    def assert_response(self, response: "Response") -> None:
         if response.status_code in [
             400,
         ]:
@@ -69,7 +76,7 @@ class Client:
         if response.status_code not in [201, 200]:
             raise ConnectionError(response.status_code, response.url)
 
-    def ping(self) -> dict[str, str]:
+    def ping(self) -> dict[str, Any]:
         try:
             response = self.transport.get("/api/system/ping/")
             self.assert_response(response)
@@ -81,17 +88,19 @@ class Client:
             logger.exception(e)
             raise
 
-    def list_events(self):
+    def list_events(self) -> dict[str, Any]:
         try:
             response = self.transport.get("e/")
-            # self.assert_response(response)
+            self.assert_response(response)
             ret = response.json()
             return ret
         except Exception as e:
             logger.exception(e)
             raise
 
-    def trigger(self, event: str, context: Optional[dict[str, str]] = None, options: Optional[dict[str, str]] = None):
+    def trigger(
+        self, event: str, context: Optional[dict[str, str]] = None, options: Optional[dict[str, str]] = None
+    ) -> dict[str, Any]:
         try:
             response = self.transport.post(f"e/{event}/trigger/", {"context": context or {}, "options": options or {}})
             if response.status_code in [404]:
@@ -103,13 +112,17 @@ class Client:
             logger.exception(e)
             raise
 
-    #
-    # def send(self, event: str, context: Optional[dict[str, str]] = None):
-    #     if self.debug:
-    #         logger.debug(f'sending to {event}')
-    #     response = self.transport.post(f'e/{event}/trigger/', context)
-    #     self.assert_response(response)
-    #     return response
+
+ctx.set(Client(None))
 
 
-client: Optional[Client] = None
+def init(bae: Optional[str] = None, **kwargs: Any) -> "Client":
+
+    if not bae:
+        bae = os.environ.get("BITCASTER_BAE", "")
+    bae = bae.strip()
+    if not bae:
+        raise RuntimeError("Set BITCASTER_BAE environment variable")
+
+    ctx.set(Client(bae, **kwargs))
+    return ctx.get()

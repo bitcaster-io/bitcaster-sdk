@@ -2,7 +2,7 @@ import os
 
 import pytest
 from click.testing import CliRunner
-from bitcaster_sdk.__main__ import cli, ping
+from bitcaster_sdk.__main__ import cli
 
 
 def test_ping(client_setup, response_ping):
