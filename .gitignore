@@ -3,6 +3,7 @@
 *.sh
 __pycache__/
 *.py[cod]
+!.github
 !tests/.coveragerc
 !.dockerignore
 !.flake8

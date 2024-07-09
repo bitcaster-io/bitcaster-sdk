@@ -6,7 +6,7 @@ from bitcaster_sdk.exceptions import AuthenticationError
 
 
 @click.group()
-@click.option("--bae", envvar="BITCASTER_BAE")
+@click.option("--bae", envvar="BITCASTER_BAE", metavar="BAE", help="Bitcaster BAE. Not needed if $BITCASTER_BAE is set")
 @click.option("--debug", default=False, is_flag=True, envvar="BITCASTER_DEBUG")
 def cli(bae: str, debug: bool):
     try:
