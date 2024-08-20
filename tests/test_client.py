@@ -1,24 +1,27 @@
-import pytest
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
+import pytest
+from responses import RequestsMock
+
+from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import ConfigurationError
 
 if TYPE_CHECKING:
-    from bitcaster_sdk.client import Client
+    from _pytest.monkeypatch import MonkeyPatch
 
 
-def test_trigger(client_setup, response_trigger):
+def test_trigger(client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
     responses, client = client_setup
     url = response_trigger
-    res = client.trigger("a1", context={})
+    res = client.trigger("bitcaster", "bitcaster", "a1", context={})
     assert res == {"occurrence": 15}
 
     responses.add(responses.POST, url, body=Exception(""))
     with pytest.raises(Exception):
-        client.trigger("a1", context={})
+        client.trigger("bitcaster", "bitcaster", "a1", context={})
 
 
-def test_ping(client_setup: "[Any, Client]", monkeypatch, response_ping):
+def test_ping(client_setup: Tuple[RequestsMock, Client], monkeypatch: "MonkeyPatch", response_ping: str) -> None:
     responses, client = client_setup
 
     res = client.ping()
@@ -29,17 +32,17 @@ def test_ping(client_setup: "[Any, Client]", monkeypatch, response_ping):
         client.ping()
 
 
-def test_list_events(client_setup: "[Any, Client]", response_list):
+def test_list_events(client_setup: Tuple[RequestsMock, Client], response_events: str) -> None:
     responses, client = client_setup
-    url = response_list
-    res = client.list_events()
+    url = response_events
+    res = client.list_events("bitcaster", "bitcaster")
     assert res[0]["active"]
 
     responses.add(responses.GET, url, body=Exception(""))
     with pytest.raises(Exception):
-        client.list_events()
+        client.list_events("bitcaster", "bitcaster")
 
 
-def test_client_parse_url(client: "Client"):
+def test_client_parse_url(client: "Client") -> None:
     with pytest.raises(ConfigurationError):
-        assert client.parse_url("")
+        client.parse_url("")

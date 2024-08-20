@@ -22,5 +22,3 @@ Setupt environemnt
         trigger(11)
 
     ```
-
-

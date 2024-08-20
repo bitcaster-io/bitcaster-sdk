@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = bitcaster_sdk
+source = src
 include =
 
 [report]
@@ -20,7 +20,8 @@ exclude_lines =
     if __name__ == .__main__.:
     if django.VERSION[1] < 6:
     raise
-    logger.exception(e)
+    logger.exception\(e\)
+
 
 ignore_errors = True
 

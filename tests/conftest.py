@@ -1,15 +1,11 @@
 import os
-from unittest.mock import MagicMock
-from urllib.parse import urlparse, urlsplit
+from typing import Tuple
 
 import pytest
 import responses
+from responses import RequestsMock
 
-import bitcaster_sdk
-
-
-# from bitcaster_sdk.client import Client
-# from bitcaster_sdk.sdk import Bitcaster
+from bitcaster_sdk.client import Client
 
 
 class FakeRequestsMock:
@@ -33,7 +29,8 @@ class BitcasterRequestsMock:
 
 
 def pytest_configure(config):
-    os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
+    os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/"
+    # os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
     # os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
 
 
@@ -43,7 +40,7 @@ def bae():
 
 
 @pytest.fixture(scope="function")
-def client(bae):
+def client(bae: str) -> Client:
     from bitcaster_sdk import init
 
     return init(bae)
@@ -57,24 +54,24 @@ def client_setup(client):
 
 
 @pytest.fixture(scope="function")
-def response_ping(client_setup):
+def response_ping(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
     yield
 
 
 @pytest.fixture(scope="function")
-def response_trigger(client_setup):
+def response_trigger(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
-    url = f"{client.base_url}e/a1/trigger/"
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
     responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
     yield url
 
 
 @pytest.fixture(scope="function")
-def response_list(client_setup):
+def response_events(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
-    url = f"{client.base_url}e/"
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/"
     responses.add(
         responses.GET,
         url,
@@ -111,6 +108,87 @@ def response_list(client_setup):
                 "name": "Test Event #3",
                 "newsletter": False,
                 "slug": "test-event-3",
+            },
+        ],
+    )
+    yield url
+
+
+@pytest.fixture(scope="function")
+def response_lists(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/d/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[{"name": "Dis1", "id": 2, "members": "http://localhost:8000/api/o/local/p/project1/d/2/m/"}],
+    )
+    yield url
+
+
+@pytest.fixture(scope="function")
+def response_members(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/d/1/m/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[
+            {
+                "id": 1,
+                "address": "user1@example.com",
+                "user": "user1@example.com",
+                "channel": "BitcasterLog",
+                "active": True,
+            }
+        ],
+    )
+    yield url
+
+
+@pytest.fixture(scope="function")
+def response_users(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}u/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[
+            {
+                "id": 1,
+                "email": "user1@example.com",
+                "username": "user1@example.com",
+                "locked": False,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": True,
+                "custom_fields": {},
+            },
+            {
+                "id": 2,
+                "email": "user2@example.com",
+                "username": "user2@example.com",
+                "locked": True,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": True,
+                "custom_fields": {},
+            },
+            {
+                "id": 3,
+                "email": "user3@example.com",
+                "username": "user3@example.com",
+                "locked": False,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": False,
+                "custom_fields": {},
             },
         ],
     )
