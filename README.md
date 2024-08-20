@@ -22,3 +22,26 @@ Setupt environemnt
         trigger(11)
 
     ```
+
+
+
+- from command line
+
+    ```  
+    $ bitcaster
+    Usage: bitcaster [OPTIONS] COMMAND [ARGS]...
+    
+    Options:
+      --bae BAE  Bitcaster BAE. Not needed if $BITCASTER_BAE is set
+      --debug
+      --help     Show this message and exit.
+    
+    Commands:
+      events   lists Application's Events
+      lists    lists Project's DistributionList
+      members  lists DistributionList Members
+      ping     ping Bitcaster server
+      trigger  trigger Application's Event
+      users    displays Organization's Users
+
+    ```
