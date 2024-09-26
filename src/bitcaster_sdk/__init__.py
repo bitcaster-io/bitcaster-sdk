@@ -1,3 +1,5 @@
+__version__ = "0.1.1"
+
 from typing import Any, Optional
 
 from bitcaster_sdk import client

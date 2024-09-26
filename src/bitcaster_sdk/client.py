@@ -143,9 +143,14 @@ must match {self.url_regex}"""
         event: str,
         context: Optional[dict[str, str]] = None,
         options: Optional[dict[str, str]] = None,
+        cid: Optional[str] = None
     ) -> dict[str, Any]:
         try:
-            url = self.transport.get_url(f"p/{project}/a/{application}/e/{event}/trigger/")
+            if cid:
+                cid = f"?cid={cid}"
+            else:
+                cid = ""
+            url = self.transport.get_url(f"p/{project}/a/{application}/e/{event}/trigger/{cid}")
             response = self.transport.post(url, {"context": context or {}, "options": options or {}})
             if response.status_code in [404]:
                 print(self.transport.session.headers)

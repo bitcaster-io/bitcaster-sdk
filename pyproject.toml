@@ -1,6 +1,6 @@
 [project]
 name = "bitcaster_sdk"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bitcaster Python SDK"
 authors = [
     {name = "mark", email = "hanarero@gmail.com"},

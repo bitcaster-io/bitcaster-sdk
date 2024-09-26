@@ -21,6 +21,13 @@ def test_trigger(client_setup: Tuple[RequestsMock, Client], response_trigger: st
         client.trigger("bitcaster", "bitcaster", "a1", context={})
 
 
+def test_cid_trigger(client_setup, response_cid_trigger):
+    responses, client = client_setup
+    url = response_cid_trigger
+    res = client.trigger("bitcaster", "bitcaster", "a1", context={}, cid="b73c34d3-bb28-4389-86f3-aaabc7606474")
+    assert res == {"occurrence": 15}
+
+
 def test_ping(client_setup: Tuple[RequestsMock, Client], monkeypatch: "MonkeyPatch", response_ping: str) -> None:
     responses, client = client_setup
 
