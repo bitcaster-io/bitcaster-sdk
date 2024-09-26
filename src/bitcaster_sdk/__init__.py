@@ -15,8 +15,9 @@ def trigger(
     event: str,
     context: Optional[dict[str, str]] = None,
     options: Optional[dict[str, str]] = None,
+    cid: Optional[str] = None
 ) -> dict[str, Any]:
-    return client.ctx.get().trigger(project, application, event, context, options)
+    return client.ctx.get().trigger(project, application, event, context, options, cid)
 
 
 def ping() -> dict[str, Any]:
