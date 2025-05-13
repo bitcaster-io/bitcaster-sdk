@@ -1,6 +1,11 @@
 Bitcaster Python SDK
 --------------------
 
+[![Pypi](https://badge.fury.io/py/bitcaster-sdk.svg)](https://badge.fury.io/py/bitcaster-sdk)
+[![coverage](https://codecov.io/github/bitcaster-io/bitcaster-sdk/coverage.svg?branch=develop)](https://codecov.io/github/saxix/django-strategy-field?branch=develop)
+[![Test](https://github.com/bitcaster-io/bitcaster-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/bitcaster-io/bitcaster-sdk/actions/workflows/test.yml)
+[![Django](https://img.shields.io/pypi/frameworkversions/bitcaster-io/bitcaster-sdk)](https://pypi.org/project/bitcaster-sdk/)
+
 
 How to use it:
 

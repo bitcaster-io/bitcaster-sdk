@@ -21,7 +21,7 @@ exclude_lines =
     if django.VERSION[1] < 6:
     raise
     logger.exception\(e\)
-
+    if TYPE_CHECKING:
 
 ignore_errors = True
 

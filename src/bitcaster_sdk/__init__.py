@@ -4,8 +4,11 @@ from typing import Any
 from bitcaster_sdk import client
 
 from .client import init
+from .version import __version__
 
-__all__ = ["init", "trigger", "ping", "list_events", "list_users", "list_distribution_lists"]
+__all__ = ["init", "trigger", "ping", "list_events", "list_users", "list_distribution_lists", "VERSION"]
+
+VERSION = __version__
 
 
 def trigger(
