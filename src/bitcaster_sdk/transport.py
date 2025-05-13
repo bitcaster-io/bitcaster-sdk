@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from typing import Any, Iterator
 from urllib.parse import urlparse
@@ -16,13 +18,12 @@ class Transport:
         self.conn = urlparse(base_url)
 
     def get_url(self, path: str) -> str:
-        # return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
         if path.startswith("http:"):
             return path
-        elif path.startswith("/"):
+        if path.startswith("/"):
             return f"{self.conn.scheme}://{self.conn.netloc}{path}"
-        else:
-            return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
+
+        return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
 
     @contextmanager
     def with_headers(self, values: dict[str, str]) -> Iterator[None]:

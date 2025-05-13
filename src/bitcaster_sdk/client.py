@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import os
 import re
 from contextvars import ContextVar
-from typing import Any, Optional
+from typing import Any
 
 import requests.exceptions
 from requests import Response
@@ -10,7 +12,7 @@ from bitcaster_sdk.exceptions import (
     AuthenticationError,
     AuthorizationError,
     ConfigurationError,
-    EventNotFound,
+    EventNotFoundError,
     ValidationError,
 )
 
@@ -25,13 +27,11 @@ class Client:
         r"(?P<schema>https?):\/\/(?P<token>.*)@"
         r"(?P<host>.*)\/api\/"
         r"o\/(?P<organization>.+)\/$"
-        # r"p\/(?P<project>.+)\/"
-        # r"a\/(?P<application>.+)"
     )
 
-    def __init__(self, bae: Optional[str] = None, debug: Optional[bool] = False) -> None:
+    def __init__(self, bae: str | None = None, debug: bool = False) -> None:
         self.options: dict[str, Any] = {}
-        self.transport: Optional[Transport] = None
+        self.transport: Transport | None = None
         if bae is not None:
             self.bae = bae
             self.options = {"debug": debug, "shutdown_timeout": 10}
@@ -53,7 +53,6 @@ must match {self.url_regex}"""
     @property
     def base_url(self) -> str:
         return "{schema}://{host}/api/o/{organization}/".format(**self.options)
-        # return "{schema}://{host}/api/o/{organization}/p/{project}/a/{application}/".format(**self.options)
 
     @property
     def api_url(self) -> str:
@@ -79,7 +78,7 @@ must match {self.url_regex}"""
             raise AuthorizationError(f"Insufficient grants: {response.json()}")
 
         if response.status_code in [404]:
-            raise EventNotFound(f"Invalid Url: {response.url} ")
+            raise EventNotFoundError(f"Invalid Url: {response.url} ")
 
         if response.status_code not in [201, 200]:
             raise ConnectionError(response.status_code, response.url)
@@ -88,8 +87,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get("/api/system/ping/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except requests.exceptions.ConnectionError as e:
             raise ConnectionError(f"Connection Error: {self.api_url}") from e
         except Exception as e:
@@ -100,8 +98,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get(f"p/{project}/a/{application}/e/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise e
@@ -110,8 +107,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get("u/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
@@ -120,8 +116,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get(f"p/{project}/d/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
@@ -130,8 +125,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get(f"p/{project}/d/{distribution_list}/m/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
@@ -141,9 +135,9 @@ must match {self.url_regex}"""
         project: str,
         application: str,
         event: str,
-        context: Optional[dict[str, str]] = None,
-        options: Optional[dict[str, str]] = None,
-        cid: Optional[str] = None
+        context: dict[str, str] | None = None,
+        options: dict[str, str] | None = None,
+        cid: str | None = None,
     ) -> dict[str, Any]:
         try:
             if cid:
@@ -153,11 +147,9 @@ must match {self.url_regex}"""
             url = self.transport.get_url(f"p/{project}/a/{application}/e/{event}/trigger/{cid}")
             response = self.transport.post(url, {"context": context or {}, "options": options or {}})
             if response.status_code in [404]:
-                print(self.transport.session.headers)
-                raise EventNotFound(f"Event not found at {url}")
+                raise EventNotFoundError(f"Event not found at {url}")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
@@ -166,7 +158,7 @@ must match {self.url_regex}"""
 ctx.set(Client(None))
 
 
-def init(bae: Optional[str] = None, **kwargs: Any) -> "Client":
+def init(bae: str | None = None, **kwargs: Any) -> "Client":
     if bae is None:
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()

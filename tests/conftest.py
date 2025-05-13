@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import os
-from typing import Tuple
+from typing import Tuple, TYPE_CHECKING
 
 import pytest
 import responses
 from responses import RequestsMock
 
-from bitcaster_sdk.client import Client
+
+if TYPE_CHECKING:
+    from bitcaster_sdk.client import Client
 
 
 class FakeRequestsMock:
@@ -30,53 +34,49 @@ class BitcasterRequestsMock:
 
 def pytest_configure(config):
     os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/"
-    # os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
-    # os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def bae():
     return os.environ["BITCASTER_BAE"]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client(bae: str) -> Client:
     from bitcaster_sdk import init
 
     return init(bae)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client_setup(client):
-    # yield MagicMock(), client
     with responses.RequestsMock() as rsps:
         yield rsps, client
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_ping(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
-    yield
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_trigger(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
     responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_cid_trigger(client_setup):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/?cid=b73c34d3-bb28-4389-86f3-aaabc7606474"
     responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_events(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/a/bitcaster/e/"
@@ -119,10 +119,10 @@ def response_events(client_setup: Tuple[RequestsMock, Client]):
             },
         ],
     )
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_lists(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/d/"
@@ -131,10 +131,10 @@ def response_lists(client_setup: Tuple[RequestsMock, Client]):
         url,
         json=[{"name": "Dis1", "id": 2, "members": "http://localhost:8000/api/o/local/p/project1/d/2/m/"}],
     )
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_members(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/d/1/m/"
@@ -151,10 +151,10 @@ def response_members(client_setup: Tuple[RequestsMock, Client]):
             }
         ],
     )
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_users(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}u/"
@@ -200,4 +200,4 @@ def response_users(client_setup: Tuple[RequestsMock, Client]):
             },
         ],
     )
-    yield url
+    return url
