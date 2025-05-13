@@ -137,9 +137,14 @@ must match {self.url_regex}"""
         event: str,
         context: dict[str, str] | None = None,
         options: dict[str, str] | None = None,
+        cid: str | None = None,
     ) -> dict[str, Any]:
         try:
-            url = self.transport.get_url(f"p/{project}/a/{application}/e/{event}/trigger/")
+            if cid:
+                cid = f"?cid={cid}"
+            else:
+                cid = ""
+            url = self.transport.get_url(f"p/{project}/a/{application}/e/{event}/trigger/{cid}")
             response = self.transport.post(url, {"context": context or {}, "options": options or {}})
             if response.status_code in [404]:
                 raise EventNotFoundError(f"Event not found at {url}")

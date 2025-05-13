@@ -69,6 +69,14 @@ def response_trigger(client_setup: Tuple[RequestsMock, Client]):
 
 
 @pytest.fixture
+def response_cid_trigger(client_setup):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/?cid=b73c34d3-bb28-4389-86f3-aaabc7606474"
+    responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
+    return url
+
+
+@pytest.fixture
 def response_events(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     url = f"{client.base_url}p/bitcaster/a/bitcaster/e/"
