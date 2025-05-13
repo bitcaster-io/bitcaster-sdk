@@ -20,11 +20,14 @@ run_tests:
   - *python
   - *dependencies
   - 'pytest.ini'
-
-migrations:
-  - added|modified: 'src/**/migrations/*'
+  - '.github/workflows/test.yml'
 
 lint:
   -  *python
-  - '.flake8'
+  - 'ruff.toml'
+  - 'pyproject.toml'
+
+mypy:
+  -  *python
+  - 'mypy.ini'
   - 'pyproject.toml'
