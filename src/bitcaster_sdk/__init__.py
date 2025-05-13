@@ -1,4 +1,5 @@
-from typing import Any, Optional
+from __future__ import annotations
+from typing import Any
 
 from bitcaster_sdk import client
 
@@ -11,8 +12,8 @@ def trigger(
     project: str,
     application: str,
     event: str,
-    context: Optional[dict[str, str]] = None,
-    options: Optional[dict[str, str]] = None,
+    context: dict[str, str] | None = None,
+    options: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     return client.ctx.get().trigger(project, application, event, context, options)
 

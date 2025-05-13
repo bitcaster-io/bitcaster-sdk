@@ -1,0 +1,21 @@
+include README.md
+include CHANGES
+include MANIFEST.in
+include pyproject.toml
+
+recursive-exclude src *.pyc
+
+recursive-include src *
+
+recursive-exclude docs *
+recursive-exclude tests *
+
+prune docs
+prune tests
+
+exclude .*
+exclude *.in
+exclude *.lock
+exclude *.ini
+exclude ruff.toml
+exclude *.yaml

@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import os
-from typing import Tuple
+from typing import Tuple, List, TYPE_CHECKING
 
 import pytest
 from click.testing import CliRunner
-from responses import RequestsMock
 
 from bitcaster_sdk.__main__ import cli
-from bitcaster_sdk.client import Client
+
+if TYPE_CHECKING:
+    from responses import RequestsMock
+    from bitcaster_sdk.client import Client
 
 
 def test_ping(client_setup: Tuple[RequestsMock, Client], response_ping: str) -> None:
@@ -17,8 +21,8 @@ def test_ping(client_setup: Tuple[RequestsMock, Client], response_ping: str) -> 
 
 
 # @pytest.mark.parametrize("token", [os.environ["BITCASTER_BAE"], None], ids=["token", "no-token"])
-@pytest.mark.parametrize("args", (["--bae", "xx", "ping"],))
-def test_error_handling(args: list[str]) -> None:
+@pytest.mark.parametrize("args", [["--bae", "xx", "ping"]])
+def test_error_handling(args: List[str]) -> None:
     runner = CliRunner()
     result = runner.invoke(cli, args)
     assert result.exit_code > 0

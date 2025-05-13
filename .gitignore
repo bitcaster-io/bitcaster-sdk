@@ -1,8 +1,16 @@
 .*
 ~*
 *.sh
-__pycache__/
 *.py[cod]
+
+__pycache__/
+dist/
+
+coverage.xml
+Makefile
+site
+src/bitcaster_sdk/version.py
+
 !.github
 !tests/.coveragerc
 !.dockerignore
@@ -14,8 +22,3 @@ __pycache__/
 !.pre-commit-config.yaml
 !.bumpversion.cfg
 !.trivyignore
-coverage.xml
-Makefile
-site
-black.txt
-flake8

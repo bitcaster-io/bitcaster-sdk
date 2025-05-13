@@ -1,4 +1,4 @@
-class EventNotFound(Exception):
+class EventNotFoundError(Exception):
     pass
 
 

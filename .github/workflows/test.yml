@@ -1,39 +1,26 @@
 name: Test
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - '**'        # matches every branch
-
-concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
-
-defaults:
-  run:
-    shell: bash
-
-permissions:
-  id-token: write
-  attestations: write
-
+    branches: [ "develop" ]
+    tags-ignore: [ "**" ]
+  pull_request:
+  schedule:
+    - cron: "0 8 * * *"
 
 jobs:
   changes:
     runs-on: ubuntu-latest
-    concurrency:
-      group: changes-group
-      cancel-in-progress: true
     timeout-minutes: 1
     defaults:
       run:
         shell: bash
     outputs:
-      run_tests: ${{steps.changes.outputs.run_tests }}
-      lint: ${{steps.changes.outputs.lint }}
+      run_tests: ${{ steps.changes.outputs.run_tests }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.7
+        uses: actions/checkout@v4
       - id: changes
         name: Check for file changes
         uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
@@ -42,69 +29,62 @@ jobs:
           token: ${{ github.token }}
           filters: .github/file-filters.yml
 
-  ci:
-    runs-on: ubuntu-latest
-    name: Test py${{ matrix.python-version }}/dj${{matrix.django-version}}
-    defaults:
-      run:
-        shell: bash
-    strategy:
-      max-parallel: 1
-      matrix:
-        python-version: [ "3.11", "3.12" ]
-        django-version: [ "3.2", "4.2", "5.0" ]
-      fail-fast: true
+  test:
     needs: [ changes ]
-    if: needs.changes.outputs.run_tests || needs.changes.outputs.lint
+    if: needs.changes.outputs.run_tests == 'true'
+    services:
+      redis:
+        image: redis
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cfg: [ "d52-py310", "d42-py38" ]
+    env:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_ALWAYS_EAGER: true
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4.1.7
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python-version }}
-          architecture: 'x64'
+          fetch-depth: 0
 
-      - name: Cache virtualenv
-        uses: actions/cache@v3
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
         with:
-          key: venv-${{ runner.os }}-${{ steps.setup_python.outputs.python-version}}-${{ hashFiles('pdm.lock') }}
-          path: .venv
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+          cache-suffix: ${{ matrix.cfg }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ matrix.python }}
 
-      - name: Test
-        continue-on-error: true
-        run: |
-          pip install pdm
-          pdm venv create -q
-          pdm install
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh-actions
 
-      - name: lint
-        if: needs.changes.outputs.lint
-        run: |
-          pdm run isort src/ --check-only
-          pdm run flake8 src/
+      - name: Setup test suite
+        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
 
-      - name: Test
-        if: needs.changes.outputs.run_tests
-        run: |
-          pdm run pytest tests --create-db --junit-xml junit-${{ matrix.python-version }}-${{matrix.django-version}}.xml
+      - name: Run test suite ${{ matrix.cfg }}
+        run: tox -e ${{ matrix.cfg }}
 
       - name: Upload pytest test results
         uses: actions/upload-artifact@v4
         with:
-          name: pytest-results-${{ matrix.python-version }}-${{matrix.django-version}}
-          path: junit-${{ matrix.python-version }}-${{matrix.django-version}}.xml
+          name: pytest-results-${{ matrix.cfg }}
+          path: junit-${{ matrix.cfg }}.xml
         if: ${{ always() }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: ${{ always() }}
+        uses: codecov/codecov-action@v5
         continue-on-error: true
         with:
           env_vars: OS,PYTHON
           fail_ci_if_error: true
-          files: coverage.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          files: ./coverage.xml
           verbose: false
+          token: ${{ secrets.CODECOV_TOKEN }}
           name: codecov-${{env.GITHUB_REF_NAME}}
