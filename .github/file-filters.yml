@@ -26,8 +26,3 @@ lint:
   -  *python
   - 'ruff.toml'
   - 'pyproject.toml'
-
-mypy:
-  -  *python
-  - 'mypy.ini'
-  - 'pyproject.toml'
