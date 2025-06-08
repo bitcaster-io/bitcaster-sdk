@@ -65,7 +65,7 @@ jobs:
         run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh-actions
 
       - name: Setup test suite
-        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
+        run: tox run --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
 
       - name: Run test suite ${{ matrix.cfg }}
         run: tox -e ${{ matrix.cfg }}
