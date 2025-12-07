@@ -121,6 +121,24 @@ must match {self.url_regex}"""
             logger.exception(e)
             raise
 
+    def list_projects(self) -> list[dict[str, Any]]:
+        try:
+            response = self.transport.get("p/")
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def list_applications(self, project) -> list[dict[str, Any]]:
+        try:
+            response = self.transport.get(f"p/{project}/a/")
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
     def list_members(self, project: str, distribution_list: str) -> list[dict[str, Any]]:
         try:
             response = self.transport.get(f"p/{project}/d/{distribution_list}/m/")
