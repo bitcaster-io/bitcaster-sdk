@@ -1,5 +1,6 @@
+from typing import TYPE_CHECKING, Any
+
 import pytest
-from typing import TYPE_CHECKING
 
 from bitcaster_sdk.exceptions import ConfigurationError
 
@@ -13,30 +14,30 @@ def test_trigger(client_setup, response_trigger):
     res = client.trigger("a1", context={})
     assert res == {"occurrence": 15}
 
-    responses.add(responses.POST, url, body=Exception(""))
-    with pytest.raises(Exception):
+    responses.add(responses.POST, url, body=ConnectionError(""))
+    with pytest.raises(ConnectionError, match=""):
         client.trigger("a1", context={})
 
 
-def test_ping(client_setup: "[Any, Client]", monkeypatch, response_ping):
+def test_ping(client_setup: tuple[Any, "Client"], monkeypatch, response_ping):
     responses, client = client_setup
 
     res = client.ping()
     assert res == {"token": "Key1", "slug": "core"}
 
-    responses.add(responses.GET, f"{client.api_url}system/ping/", body=Exception(""))
-    with pytest.raises(Exception):
+    responses.add(responses.GET, f"{client.api_url}system/ping/", body=ConnectionError(""))
+    with pytest.raises(ConnectionError, match=""):
         client.ping()
 
 
-def test_list_events(client_setup: "[Any, Client]", response_list):
+def test_list_events(client_setup: tuple[Any, "Client"], response_list):
     responses, client = client_setup
     url = response_list
     res = client.list_events()
     assert res[0]["active"]
 
-    responses.add(responses.GET, url, body=Exception(""))
-    with pytest.raises(Exception):
+    responses.add(responses.GET, url, body=ConnectionError(""))
+    with pytest.raises(ConnectionError, match=""):
         client.list_events()
 
 

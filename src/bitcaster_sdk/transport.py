@@ -3,7 +3,7 @@ from urllib.parse import urlparse
 
 import requests
 
-from .logging import logger
+from .log import logger
 
 
 class Transport:
@@ -17,8 +17,7 @@ class Transport:
     def get_url(self, path):
         if path.startswith("/"):
             return f"{self.conn.scheme}://{self.conn.netloc}{path}"
-        else:
-            return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
+        return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
 
     @contextmanager
     def with_headers(self, values: dict):

@@ -1,7 +1,7 @@
 import os
 import re
 from contextvars import ContextVar
-from typing import Any, Optional
+from typing import Any
 
 import requests.exceptions
 from requests import Response
@@ -9,11 +9,11 @@ from requests import Response
 from bitcaster_sdk.exceptions import (
     AuthenticationError,
     ConfigurationError,
-    EventNotFound,
+    EventNotFoundError,
     ValidationError,
 )
 
-from .logging import logger
+from .log import logger
 from .transport import Transport
 
 ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
@@ -28,9 +28,9 @@ class Client:
         r"a\/(?P<application>.+)"
     )
 
-    def __init__(self, bae: Optional[str] = None, debug: Optional[bool] = False) -> None:
+    def __init__(self, bae: str | None = None, debug: bool | None = False) -> None:
         self.options: dict[str, Any] = {}
-        self.transport: Optional[Transport] = None
+        self.transport: Transport | None = None
         if bae is not None:
             self.bae = bae
             self.options = {"debug": debug, "shutdown_timeout": 10}
@@ -71,7 +71,7 @@ must match {self.url_regex}"""
             raise AuthenticationError(f"Insufficient grants: {response.url}")
 
         if response.status_code in [404]:
-            raise EventNotFound(f"Invalid Stream: {response.url} ")
+            raise EventNotFoundError(f"Invalid Stream: {response.url} ")
 
         if response.status_code not in [201, 200]:
             raise ConnectionError(response.status_code, response.url)
@@ -80,8 +80,7 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get("/api/system/ping/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except requests.exceptions.ConnectionError as e:
             raise ConnectionError(f"Connection Error: {self.api_url}") from e
         except Exception as e:
@@ -92,22 +91,20 @@ must match {self.url_regex}"""
         try:
             response = self.transport.get("e/")
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
 
     def trigger(
-        self, event: str, context: Optional[dict[str, str]] = None, options: Optional[dict[str, str]] = None
+        self, event: str, context: dict[str, str] | None = None, options: dict[str, str] | None = None
     ) -> dict[str, Any]:
         try:
             response = self.transport.post(f"e/{event}/trigger/", {"context": context or {}, "options": options or {}})
             if response.status_code in [404]:
-                raise EventNotFound(response.json())
+                raise EventNotFoundError(response.json())
             self.assert_response(response)
-            ret = response.json()
-            return ret
+            return response.json()
         except Exception as e:
             logger.exception(e)
             raise
@@ -116,8 +113,7 @@ must match {self.url_regex}"""
 ctx.set(Client(None))
 
 
-def init(bae: Optional[str] = None, **kwargs: Any) -> "Client":
-
+def init(bae: str | None = None, **kwargs: Any) -> "Client":
     if bae is None:
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()

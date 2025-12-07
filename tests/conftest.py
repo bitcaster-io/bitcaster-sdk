@@ -1,15 +1,7 @@
 import os
-from unittest.mock import MagicMock
-from urllib.parse import urlparse, urlsplit
 
 import pytest
 import responses
-
-import bitcaster_sdk
-
-
-# from bitcaster_sdk.client import Client
-# from bitcaster_sdk.sdk import Bitcaster
 
 
 class FakeRequestsMock:
@@ -34,44 +26,41 @@ class BitcasterRequestsMock:
 
 def pytest_configure(config):
     os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
-    # os.environ["BITCASTER_BAE"] = "http://796863862936@localhost:8000/api/o/unicef/p/hope/a/core"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def bae():
     return os.environ["BITCASTER_BAE"]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client(bae):
     from bitcaster_sdk import init
 
     return init(bae)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def client_setup(client):
-    # yield MagicMock(), client
     with responses.RequestsMock() as rsps:
         yield rsps, client
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_ping(client_setup):
     responses, client = client_setup
     responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
-    yield
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_trigger(client_setup):
     responses, client = client_setup
     url = f"{client.base_url}e/a1/trigger/"
     responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
-    yield url
+    return url
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def response_list(client_setup):
     responses, client = client_setup
     url = f"{client.base_url}e/"
@@ -114,4 +103,4 @@ def response_list(client_setup):
             },
         ],
     )
-    yield url
+    return url

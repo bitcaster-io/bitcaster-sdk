@@ -1,37 +1,42 @@
+import logging
+
 import click
 from click import echo, secho
 
 import bitcaster_sdk
-from bitcaster_sdk.exceptions import AuthenticationError
 
 
 @click.group()
 @click.option("--bae", envvar="BITCASTER_BAE")
 @click.option("--debug", default=False, is_flag=True, envvar="BITCASTER_DEBUG")
 def cli(bae: str, debug: bool):
+    logger = logging.getLogger("bitcaster_sdk")
+    logger.setLevel(logging.CRITICAL)
+    logger.handlers.clear()
+
     try:
         bitcaster_sdk.init(bae, debug=debug)
     except Exception as e:
-        raise click.ClickException(f"Failed to initialize Bitcaster. {e}")
+        raise click.ClickException(f"Failed to initialize Bitcaster. {e}") from e
 
 
 @cli.command(name="list")
 def list_() -> None:
-    FMT = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
+    fmt = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
 
     try:
         ret = bitcaster_sdk.list_events()
-        secho(FMT.format("#", "Name", "Slug", "active", "locked", "description"))
+        secho(fmt.format("#", "Name", "Slug", "active", "locked", "description"))
         for n, e in enumerate(ret, 1):
             cl = "white"
             if e["locked"]:
                 cl = "red"
             elif e["active"]:
                 cl = "green"
-            else: # e["active"]:
+            else:  # e["active"]:
                 cl = "yellow"
             secho(
-                FMT.format(
+                fmt.format(
                     n,
                     e["name"],
                     e["slug"],
@@ -42,16 +47,17 @@ def list_() -> None:
                 fg=cl,
             )
     except Exception as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 @cli.command()
-def ping() -> None:
+@click.option("--debug", "-d", type=bool, is_flag=True)
+def ping(debug: bool) -> None:
     try:
         ret = bitcaster_sdk.ping()
         echo(ret)
     except Exception as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from None
 
 
 @click.argument("event")
@@ -67,7 +73,7 @@ def trigger(event, context, options, debug):
         ret = bitcaster_sdk.trigger(event, dict(context), dict(options))
         echo(ret)
     except Exception as e:
-        raise click.ClickException(str(e))
+        raise click.ClickException(str(e)) from e
 
 
 if __name__ == "__main__":

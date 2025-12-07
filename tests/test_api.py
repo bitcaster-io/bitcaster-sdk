@@ -11,7 +11,6 @@ def test_trigger(client_setup, response_trigger):
     bitcaster_sdk.trigger("a1")
 
 
-#
 @pytest.mark.parametrize("bae", ["", "aa", "ftp://example.com", "https://example.com"])
 def test_init_error(bae):
     import bitcaster_sdk

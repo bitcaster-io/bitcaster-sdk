@@ -1,8 +1,8 @@
 import os
 
 import pytest
-from click import ClickException
 from click.testing import CliRunner
+
 from bitcaster_sdk.__main__ import cli
 
 
@@ -13,8 +13,7 @@ def test_ping(client_setup, response_ping):
     assert result.output == "{'token': 'Key1', 'slug': 'core'}\n"
 
 
-# @pytest.mark.parametrize("token", [os.environ["BITCASTER_BAE"], None], ids=["token", "no-token"])
-@pytest.mark.parametrize("args", (["--bae", "xx", "ping"],))
+@pytest.mark.parametrize("args", [["--bae", "xx", "ping"]])
 def test_error_handling(args):
     runner = CliRunner()
     result = runner.invoke(cli, args)

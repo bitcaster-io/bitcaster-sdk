@@ -1,0 +1,131 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '**'        # matches every branch
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}-test"
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  id-token: write
+  attestations: write
+
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    defaults:
+      run:
+        shell: bash
+    outputs:
+      run_tests: ${{steps.changes.outputs.run_tests }}
+      lint: ${{steps.changes.outputs.lint }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - id: changes
+        name: Check for file changes
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref }}
+          token: ${{ github.token }}
+          filters: .github/file-filters.yml
+
+  ci:
+    runs-on: ubuntu-latest
+    name: Test ${{ matrix.cfg }}
+    services:
+      redis:
+        image: redis
+        ports:
+          - 16379:6379
+      postgres:
+        image: postgres
+        ports:
+          - 15432:5432
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: django_celery_boost
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      max-parallel: 1
+      matrix:
+        cfg: [ "d52-py310", "d42-py39" ]
+
+      fail-fast: true
+    needs: [ changes ]
+    if: needs.changes.outputs.run_tests || needs.changes.outputs.lint
+    env:
+      CELERY_BROKER_URL: redis://localhost:16379/0
+      DB_HOST: "localhost"
+      DB_PORT: 15432
+      DB_USER: "postgres"
+      DB_PASSWORD: "postgres"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: 'x64'
+      - name: Restore cached venv
+        id: cache-venv-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .cache-uv/
+            .venv/
+          key: ${{ matrix.cfg}}-${{ hashFiles('pyproject.toml') }}-venv
+
+      - uses: yezz123/setup-uv@v4
+
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: |
+            pyproject.toml
+            uv.lock
+          cache-suffix: ${{ matrix.cfg }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh-actions
+
+      - name: Setup test suite
+        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
+
+      - name: Run test suite ${{ matrix.cfg }}
+        run: tox -e ${{ matrix.cfg }}
+
+      - name: Upload pytest test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results-${{ matrix.cfg }}
+          path: junit-${{ matrix.cfg }}.xml
+        if: ${{ always() }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
+        with:
+          env_vars: OS,PYTHON
+          fail_ci_if_error: true
+          flags: unittests
+          files: ./coverage.xml
+          verbose: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: codecov-${{env.GITHUB_REF_NAME}}
