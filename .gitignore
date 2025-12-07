@@ -9,9 +9,8 @@ __pycache__/
 !.github/
 !.mypy.ini
 !.pre-commit-config.yaml
-!.bumpversion.cfg
 !.trivyignore
-version.py
+src/bitcaster_sdk/version.py
 coverage.xml
 Makefile
 site

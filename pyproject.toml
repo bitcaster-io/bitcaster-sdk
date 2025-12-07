@@ -9,6 +9,7 @@ requires = [
 name = "bitcaster-sdk"
 description = "Bitcaster Python SDK"
 readme = "README.md"
+
 license = { text = "MIT" }
 maintainers = [
   { name = "sax", email = "s.apostolico@gmail.com" },
@@ -18,10 +19,9 @@ authors = [
   { name = "sax", email = "s.apostolico@gmail.com" },
   { name = "mark", email = "hanarero@gmail.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -30,34 +30,28 @@ classifiers = [
 dynamic = [ "version" ]
 
 dependencies = [
-  "click>=8.1.7",
-  "humanfriendly>=10",
-  "requests>=2.31",
+  "click",
+  "humanfriendly",
+  "requests",
 ]
 
 scripts.bitcaster = "bitcaster_sdk:__main__.cli"
 
 [dependency-groups]
 dev = [
-  "black>=24.4",
-  "bump2version>=1.0.1",
-  "flake8>=7",
-  "isort>=5.13.2",
-  "mypy>=1.9",
-  "pdbpp>=0.10.3",
-  "pre-commit>=3.7",
-  "pytest>=8.1.1",
-  "pytest-coverage>=0",
-  "responses>=0.25",
-  "ruff>=0.14.8",
-  "tox>=4.30.3",
+  "pre-commit",
+  "pytest",
+  "pytest-coverage",
+  "pytest-django",
+  "pytest-xdist",
+  "responses",
+  "ruff",
+  "tox",
 ]
 
-docs = [
-  "mkdocs>=1.6.1",
-  "mkdocs-awesome-pages-plugin>=2.9.3",
-  "mkdocs-material>=9.5.36",
-  "mkdocstrings-python",
+typing = [
+  "mypy>=1.9",
+  "types-requests>=2.32.0.20240712",
 ]
 
 [tool.hatch]
@@ -69,6 +63,9 @@ raw-options = { root = "../.." }
 ignore-vcs = true
 include = [
   "src/bitcaster_sdk/**/*.*",
+]
+exclude = [
+  "src/bitcaster_sdk/**/~*.*",
 ]
 
 [tool.hatch.build.targets.wheel]

@@ -1,7 +1,15 @@
+from __future__ import annotations
+
 import os
+from typing import Tuple, TYPE_CHECKING
 
 import pytest
 import responses
+from responses import RequestsMock
+
+
+if TYPE_CHECKING:
+    from bitcaster_sdk.client import Client
 
 
 class FakeRequestsMock:
@@ -25,7 +33,7 @@ class BitcasterRequestsMock:
 
 
 def pytest_configure(config):
-    os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/p/bitcaster/a/bitcaster"
+    os.environ["BITCASTER_BAE"] = "http://key-11@app.bitcaster.io/api/o/os4d/"
 
 
 @pytest.fixture
@@ -34,7 +42,7 @@ def bae():
 
 
 @pytest.fixture
-def client(bae):
+def client(bae: str) -> Client:
     from bitcaster_sdk import init
 
     return init(bae)
@@ -47,23 +55,31 @@ def client_setup(client):
 
 
 @pytest.fixture
-def response_ping(client_setup):
+def response_ping(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
     responses.add(responses.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
 
 
 @pytest.fixture
-def response_trigger(client_setup):
+def response_trigger(client_setup: Tuple[RequestsMock, Client]):
     responses, client = client_setup
-    url = f"{client.base_url}e/a1/trigger/"
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
     responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
     return url
 
 
 @pytest.fixture
-def response_list(client_setup):
+def response_cid_trigger(client_setup):
     responses, client = client_setup
-    url = f"{client.base_url}e/"
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/?cid=b73c34d3-bb28-4389-86f3-aaabc7606474"
+    responses.add(responses.POST, url, json={"occurrence": 15}, status=201)
+    return url
+
+
+@pytest.fixture
+def response_events(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/"
     responses.add(
         responses.GET,
         url,
@@ -100,6 +116,87 @@ def response_list(client_setup):
                 "name": "Test Event #3",
                 "newsletter": False,
                 "slug": "test-event-3",
+            },
+        ],
+    )
+    return url
+
+
+@pytest.fixture
+def response_lists(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/d/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[{"name": "Dis1", "id": 2, "members": "http://localhost:8000/api/o/local/p/project1/d/2/m/"}],
+    )
+    return url
+
+
+@pytest.fixture
+def response_members(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/d/1/m/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[
+            {
+                "id": 1,
+                "address": "user1@example.com",
+                "user": "user1@example.com",
+                "channel": "BitcasterLog",
+                "active": True,
+            }
+        ],
+    )
+    return url
+
+
+@pytest.fixture
+def response_users(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    url = f"{client.base_url}u/"
+    responses.add(
+        responses.GET,
+        url,
+        json=[
+            {
+                "id": 1,
+                "email": "user1@example.com",
+                "username": "user1@example.com",
+                "locked": False,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": True,
+                "custom_fields": {},
+            },
+            {
+                "id": 2,
+                "email": "user2@example.com",
+                "username": "user2@example.com",
+                "locked": True,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": True,
+                "custom_fields": {},
+            },
+            {
+                "id": 3,
+                "email": "user3@example.com",
+                "username": "user3@example.com",
+                "locked": False,
+                "version": 1723969808195040,
+                "last_updated": "2024-08-18T08:45:54.879847Z",
+                "first_name": "",
+                "last_name": "",
+                "is_active": False,
+                "custom_fields": {},
             },
         ],
     )

@@ -1,19 +1,41 @@
+from __future__ import annotations
 from typing import Any
 
 from bitcaster_sdk import client
 
 from .client import init
+from .version import __version__
 
-__all__ = ["init", "trigger", "ping", "list_events"]
+__all__ = ["init", "trigger", "ping", "list_events", "list_users", "list_distribution_lists", "VERSION"]
+
+VERSION = __version__
 
 
-def trigger(event: str, context: dict[str, str] | None = None, options: dict[str, str] | None = None):
-    return client.ctx.get().trigger(event, context, options)
+def trigger(
+    project: str,
+    application: str,
+    event: str,
+    context: dict[str, str] | None = None,
+    options: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    return client.ctx.get().trigger(project, application, event, context, options)
 
 
 def ping() -> dict[str, Any]:
     return client.ctx.get().ping()
 
 
-def list_events() -> dict[str, Any]:
-    return client.ctx.get().list_events()
+def list_events(project: str, application: str) -> list[dict[str, Any]]:
+    return client.ctx.get().list_events(project, application)
+
+
+def list_distribution_lists(project: str) -> list[dict[str, Any]]:
+    return client.ctx.get().list_distribution_lists(project)
+
+
+def list_members(project: str, distribution_list: str) -> list[dict[str, Any]]:
+    return client.ctx.get().list_members(project, distribution_list)
+
+
+def list_users() -> list[dict[str, Any]]:
+    return client.ctx.get().list_users()

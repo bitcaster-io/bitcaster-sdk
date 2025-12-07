@@ -1,22 +1,7 @@
 # This is used by the action https://github.com/dorny/paths-filter
-docker: &docker
-  - added|modified: './docker/**/*'
-  - added|modified: './docker/*'
-
-code_conventions: &dependencies
-  - '.mypy.ini'
-  - '.pre-commit-config.yaml'
-  - 'pytest.ini'
-  - 'ruff.toml'
-  - 'tox.ini'
-  - 'pyproject.toml'
-
 dependencies: &dependencies
-  - 'uv.lock'
+  - 'pdm.lock'
   - 'pyproject.toml'
-
-actions: &actions
-  - added|modified: './.github/**/*'
 
 python: &python
   - added|modified: 'src/**'
@@ -32,22 +17,12 @@ mypy:
   - 'mypy.ini'
 
 run_tests:
-  - *actions
   - *python
-  - *docker
   - *dependencies
   - 'pytest.ini'
-
-migrations:
-  - added|modified: 'src/**/migrations/*'
+  - '.github/workflows/test.yml'
 
 lint:
-  - *python
-  - '.flake8'
+  -  *python
+  - 'ruff.toml'
   - 'pyproject.toml'
-
-docs:
-  - added|modified: './docs/**/*'
-  - modified: './src/hope_portal/config/__init__.py'
-  - modified: './github/workflows/docs.yml'
-  - modified: './github/file-filters.yml'

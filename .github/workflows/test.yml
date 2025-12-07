@@ -1,22 +1,13 @@
 name: Test
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - '**'        # matches every branch
-
-concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}-test"
-  cancel-in-progress: true
-
-defaults:
-  run:
-    shell: bash
-
-permissions:
-  id-token: write
-  attestations: write
-
+    branches: [ "develop" ]
+    tags-ignore: [ "**" ]
+  pull_request:
+  schedule:
+    - cron: "0 8 * * *"
 
 jobs:
   changes:
@@ -26,73 +17,40 @@ jobs:
       run:
         shell: bash
     outputs:
-      run_tests: ${{steps.changes.outputs.run_tests }}
-      lint: ${{steps.changes.outputs.lint }}
+      run_tests: ${{ steps.changes.outputs.run_tests }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
       - id: changes
         name: Check for file changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@0bc4621a3135347011ad047f9ecf449bf72ce2bd # v3.0.0
         with:
           base: ${{ github.ref }}
           token: ${{ github.token }}
           filters: .github/file-filters.yml
 
-  ci:
-    runs-on: ubuntu-latest
-    name: Test ${{ matrix.cfg }}
+  test:
+    needs: [ changes ]
+    if: needs.changes.outputs.run_tests == 'true'
     services:
       redis:
         image: redis
-        ports:
-          - 16379:6379
-      postgres:
-        image: postgres
-        ports:
-          - 15432:5432
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: django_celery_boost
-    defaults:
-      run:
-        shell: bash
+
+    runs-on: ubuntu-latest
     strategy:
-      max-parallel: 1
+      fail-fast: false
       matrix:
-        cfg: [ "d52-py310", "d42-py39" ]
-
-      fail-fast: true
-    needs: [ changes ]
-    if: needs.changes.outputs.run_tests || needs.changes.outputs.lint
+        cfg: [ "py310", "py311", "py312", "py313", "py314" ]
     env:
-      CELERY_BROKER_URL: redis://localhost:16379/0
-      DB_HOST: "localhost"
-      DB_PORT: 15432
-      DB_USER: "postgres"
-      DB_PASSWORD: "postgres"
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_ALWAYS_EAGER: true
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
         with:
-          python-version: ${{ matrix.python-version }}
-          architecture: 'x64'
-      - name: Restore cached venv
-        id: cache-venv-restore
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            .cache-uv/
-            .venv/
-          key: ${{ matrix.cfg}}-${{ hashFiles('pyproject.toml') }}-venv
-
-      - uses: yezz123/setup-uv@v4
+          fetch-depth: 0
 
       - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v6
         with:
           version: "latest"
           enable-cache: true
@@ -101,12 +59,13 @@ jobs:
             uv.lock
           cache-suffix: ${{ matrix.cfg }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          python-version: ${{ matrix.python }}
 
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv --with tox-gh-actions
 
       - name: Setup test suite
-        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
+        run: tox run --notest --skip-missing-interpreters false -e ${{ matrix.cfg }}
 
       - name: Run test suite ${{ matrix.cfg }}
         run: tox -e ${{ matrix.cfg }}
