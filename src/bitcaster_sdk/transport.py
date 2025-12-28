@@ -46,3 +46,17 @@ class Transport:
         with self.with_headers({"Content-Type": "application/json"}):
             self.last_url = self.get_url(path)
             return self.session.post(self.last_url, json=arguments)
+
+    def patch(self, path: str, arguments: dict[str, Any]) -> requests.Response:
+        if self.debug:
+            logger.info(f"post {path}")
+        with self.with_headers({"Content-Type": "application/json"}):
+            self.last_url = self.get_url(path)
+            return self.session.patch(self.last_url, json=arguments)
+
+    def put(self, path: str, arguments: dict[str, Any]) -> requests.Response:
+        if self.debug:
+            logger.info(f"post {path}")
+        with self.with_headers({"Content-Type": "application/json"}):
+            self.last_url = self.get_url(path)
+            return self.session.put(self.last_url, json=arguments)

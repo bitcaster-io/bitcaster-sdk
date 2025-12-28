@@ -35,7 +35,7 @@ dependencies = [
   "requests",
 ]
 
-scripts.bitcaster = "bitcaster_sdk:__main__.cli"
+scripts.bitcaster = "bitcaster_sdk:__cli__.cli"
 
 [dependency-groups]
 dev = [

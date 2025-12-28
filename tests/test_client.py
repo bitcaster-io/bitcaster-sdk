@@ -7,9 +7,10 @@ import pytest
 from bitcaster_sdk.exceptions import ConfigurationError
 
 if TYPE_CHECKING:
-    from responses import RequestsMock
-    from bitcaster_sdk.client import Client
     from _pytest.monkeypatch import MonkeyPatch
+    from responses import RequestsMock
+
+    from bitcaster_sdk.client import Client
 
 
 def test_trigger(client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:

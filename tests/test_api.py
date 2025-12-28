@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Tuple
 
 import pytest
 
@@ -9,6 +9,7 @@ from bitcaster_sdk.exceptions import ConfigurationError
 
 if TYPE_CHECKING:
     from responses import RequestsMock
+
     from bitcaster_sdk.client import Client
 
 

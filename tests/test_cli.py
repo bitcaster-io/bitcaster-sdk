@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import os
-from typing import Tuple, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Tuple
 
 import pytest
 from click.testing import CliRunner
 
-from bitcaster_sdk.__main__ import cli
+from bitcaster_sdk.__cli__ import cli
 
 if TYPE_CHECKING:
     from responses import RequestsMock
+
     from bitcaster_sdk.client import Client
 
 
@@ -76,7 +77,18 @@ def test_members(client_setup: Tuple[RequestsMock, Client], response_members: st
     assert result.exit_code == 0
 
 
-def test_users(client_setup: Tuple[RequestsMock, Client], response_users: str) -> None:
+def test_users_list(client_setup: Tuple[RequestsMock, Client], response_users: str) -> None:
     runner = CliRunner()
-    result = runner.invoke(cli, ["users"])
+    result = runner.invoke(cli, ["users", "list"])
+    assert result.exit_code == 0
+
+
+def test_users_update(client_setup: Tuple[RequestsMock, Client]):
+    responses, client = client_setup
+    email = "user%40example.com"
+    url = f"{client.base_url}u/{email}/"
+    responses.add(responses.PATCH, url, json={})
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["users", "update", r"user@example.com"])
     assert result.exit_code == 0
