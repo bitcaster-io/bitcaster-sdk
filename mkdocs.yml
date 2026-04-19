@@ -1,0 +1,106 @@
+copyright: Copyright &copy; 2020-2024 OS4D ltd.
+dev_addr: 127.0.0.1:8001
+docs_dir: docs
+edit_uri: 'blob/develop/docs/'
+repo_url: https://github.com/bitcaster-io/bitcaster-sdk
+site_author: Bitcaster Team
+site_description: "Python SDK for the Bitcaster notification platform"
+site_dir: ./~build/docs
+site_name: Bitcaster SDK
+site_url: https://bitcaster-io.github.io/bitcaster-sdk/
+strict: false
+extra_css:
+  - _theme/css/style.css
+exclude_docs: |
+  ~*
+  .m_templates
+  .templates
+  _scripts
+  _guidelines
+
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.snippets:
+      base_path: '.'
+      check_paths: true
+  - tables
+  - toc:
+      permalink: #
+      baselevel: 1
+
+
+extra:
+  generator: true
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bitcaster-io
+
+
+theme:
+  name: "material"
+  color_mode: auto
+  custom_dir: docs/_theme/overrides
+  favicon: _theme/img/favicon.ico
+  logo: _theme/img/logo.png
+  user_color_mode_toggle: true
+  features:
+    - content.code.copy
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      primary: red
+      media: "(prefers-color-scheme: light)"
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: red
+      media: "(prefers-color-scheme: dark)"
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+
+
+plugins:
+  - awesome-pages
+  - include-markdown:
+      encoding: ascii
+      preserve_includer_indent: false
+      dedent: false
+      trailing_newlines: true
+      comments: false
+      rewrite_relative_urls: true
+      heading_offset: 0
+      recursive: true
+  - macros
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+  - redirects:
+      redirect_maps: {}
+  - search
+  - tags:
+      tags_file: tags.md
+
+watch:
+  - docs/
+  - src/
+
+hooks:
+  - docs/_hooks/hooks.py
