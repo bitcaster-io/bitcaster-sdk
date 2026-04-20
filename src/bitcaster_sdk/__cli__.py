@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 import click
 from click import echo, secho
 
 import bitcaster_sdk
-from bitcaster_sdk import client, logging
+from bitcaster_sdk import client, log
 from bitcaster_sdk.exceptions import AuthenticationError, EventNotFoundError
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from click.core import Context
@@ -26,13 +26,35 @@ def cli(ctx: Context, bae: str, debug: bool) -> None:
             raise Exception("Set BITCASTER_BAE environment variable or pass Bitcaster address as argument")
         ctx.obj = {"debug": debug}
         if debug:
-            logging.configure_api()
+            log.configure_api()
         else:
-            logging.configure_cli()
+            log.configure_cli()
 
         bitcaster_sdk.init(bae, debug=debug)
     except Exception as e:
         raise click.ClickException(f"Failed to initialize Bitcaster. {e}") from None
+
+
+@cli.command(name="projects", help="lists Projects")
+@click.pass_context
+def projects(ctx: Context) -> None:
+    fmt = "{:>5}: {:<20} {:<20}"
+    try:
+        ret = bitcaster_sdk.list_projects()
+        if ctx.obj["debug"]:
+            secho(client.ctx.get().last_called_url)
+        secho(TITLE.format("Project List"), fg="green")
+        secho(fmt.format("#", "Slug", "Name"))
+        for n, e in enumerate(ret, 1):
+            secho(
+                fmt.format(n, e["slug"], e["name"]),
+            )
+    except AuthenticationError:
+        raise click.Abort("AuthenticationError") from None
+    except EventNotFoundError:
+        raise click.Abort("Project or Application not found") from None
+    except Exception as e:
+        raise click.ClickException(str(e)) from None
 
 
 @cli.command(name="lists", help="lists Project's DistributionList")
@@ -49,6 +71,29 @@ def lists(ctx: Context, project: str) -> None:
         for n, e in enumerate(ret, 1):
             secho(
                 fmt.format(n, e["id"], e["name"]),
+            )
+    except AuthenticationError:
+        raise click.Abort("AuthenticationError") from None
+    except EventNotFoundError:
+        raise click.Abort("Project or Application not found") from None
+    except Exception as e:
+        raise click.ClickException(str(e)) from None
+
+
+@cli.command(name="applications", help="lists Project's DistributionList")
+@click.option("--project", "-p", required=True, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster Project")
+@click.pass_context
+def applications(ctx: Context, project: str) -> None:
+    fmt = "{:>5}: {:<20} {:<20}"
+    try:
+        ret = bitcaster_sdk.list_applications(project)
+        if ctx.obj["debug"]:
+            secho(client.ctx.get().last_called_url)
+        secho(TITLE.format("Project Distribution Lists"), fg="green")
+        secho(fmt.format("#", "Slug", "Name"))
+        for n, e in enumerate(ret, 1):
+            secho(
+                fmt.format(n, e["slug"], e["name"]),
             )
     except AuthenticationError:
         raise click.Abort("AuthenticationError") from None
@@ -128,34 +173,6 @@ def events(ctx: Context, project: str, application: str) -> None:
         raise click.ClickException(str(e)) from None
 
 
-@cli.command(name="users", help="displays Organization's Users")
-def list_users() -> None:
-    fmt = "{:>5}: {:<30} {:<30} {:^8} {:^8}"
-    try:
-        ret = bitcaster_sdk.list_users()
-        secho(TITLE.format("Organization users"), fg="green")
-        secho(fmt.format("#", "Username", "Email", "active", "locked"))
-        for n, e in enumerate(ret, 1):
-            if e["locked"]:
-                cl = "red"
-            elif e["is_active"]:
-                cl = "green"
-            else:  # e["active"]:
-                cl = "yellow"
-            secho(
-                fmt.format(
-                    n,
-                    e["username"],
-                    e["email"],
-                    "\u2713" if e["is_active"] else "",
-                    "\u2713" if e["locked"] else "",
-                ),
-                fg=cl,
-            )
-    except Exception as e:
-        raise click.ClickException(str(e)) from None
-
-
 @cli.command(help="ping Bitcaster server")
 def ping() -> None:
     try:
@@ -200,6 +217,8 @@ def trigger(
     except Exception as e:
         raise click.ClickException(str(e)) from None
 
+
+from . import users  # noqa
 
 if __name__ == "__main__":
     cli(obj={}, auto_envvar_prefix="BITCASTER")

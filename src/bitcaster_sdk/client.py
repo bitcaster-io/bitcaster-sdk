@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import os
 import re
+import urllib.parse
 from contextvars import ContextVar
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import requests.exceptions
 from requests import Response
@@ -16,8 +17,12 @@ from bitcaster_sdk.exceptions import (
     ValidationError,
 )
 
-from .logging import logger
+from .helpers import JsonUpdateMode
+from .log import logger
 from .transport import Transport
+
+if TYPE_CHECKING:
+    from .types import JSON
 
 ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
 
@@ -121,6 +126,24 @@ must match {self.url_regex}"""
             logger.exception(e)
             raise
 
+    def list_projects(self) -> list[dict[str, Any]]:
+        try:
+            response = self.transport.get("p/")
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def list_applications(self, project: str) -> list[dict[str, Any]]:
+        try:
+            response = self.transport.get(f"p/{project}/a/")
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
     def list_members(self, project: str, distribution_list: str) -> list[dict[str, Any]]:
         try:
             response = self.transport.get(f"p/{project}/d/{distribution_list}/m/")
@@ -150,6 +173,45 @@ must match {self.url_regex}"""
                 raise EventNotFoundError(f"Event not found at {url}")
             self.assert_response(response)
             return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def add_user(self, email: str, first_name: str, last_name: str, custom: "JSON | None" = None) -> "JSON":
+        try:
+            response = self.transport.post(
+                "u/",
+                {"email": email, "first_name": first_name or "", "last_name": last_name or "", "custom_fields": custom},
+            )
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def update_user(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        custom_fields: "JSON | None" = None,
+        mode: str = JsonUpdateMode.IGNORE,
+    ) -> "JSON":
+        try:
+            uid = urllib.parse.quote(email)
+            response = self.transport.patch(
+                f"u/{uid}/",
+                {
+                    "first_name": first_name or "",
+                    "last_name": last_name or "",
+                    "custom_fields": custom_fields,
+                    "_mode": mode,
+                },
+            )
+            self.assert_response(response)
+            return response.json()
+        except ValidationError:
+            raise
         except Exception as e:
             logger.exception(e)
             raise

@@ -6,8 +6,7 @@ on:
     branches: [ "develop" ]
     tags-ignore: [ "**" ]
   pull_request:
-  schedule:
-    - cron: "0 8 * * *"
+
 
 jobs:
   changes:
@@ -40,7 +39,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cfg: [ "d52-py310", "d42-py38" ]
+        cfg: [ "py310", "py311", "py312", "py313", "py314" ]
     env:
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_ALWAYS_EAGER: true

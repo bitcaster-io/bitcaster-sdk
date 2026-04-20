@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Any
 
 from bitcaster_sdk import client
@@ -39,3 +40,11 @@ def list_members(project: str, distribution_list: str) -> list[dict[str, Any]]:
 
 def list_users() -> list[dict[str, Any]]:
     return client.ctx.get().list_users()
+
+
+def list_projects() -> list[dict[str, Any]]:
+    return client.ctx.get().list_projects()
+
+
+def list_applications(project: str) -> list[dict[str, Any]]:
+    return client.ctx.get().list_applications(project)

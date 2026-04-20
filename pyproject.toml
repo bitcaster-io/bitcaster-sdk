@@ -9,19 +9,19 @@ requires = [
 name = "bitcaster-sdk"
 description = "Bitcaster Python SDK"
 readme = "README.md"
-license = { text = "MIT" }
 
-authors = [
+license = { text = "MIT" }
+maintainers = [
+  { name = "sax", email = "s.apostolico@gmail.com" },
   { name = "mark", email = "hanarero@gmail.com" },
 ]
-requires-python = ">=3.8"
+authors = [
+  { name = "sax", email = "s.apostolico@gmail.com" },
+  { name = "mark", email = "hanarero@gmail.com" },
+]
+requires-python = ">=3.10"
 classifiers = [
-  "Framework :: Django :: 3.2",
-  "Framework :: Django :: 4.2",
-  "Framework :: Django :: 5.2",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -35,7 +35,7 @@ dependencies = [
   "requests",
 ]
 
-scripts.bitcaster = "bitcaster_sdk:__main__.cli"
+scripts.bitcaster = "bitcaster_sdk:__cli__.cli"
 
 [dependency-groups]
 dev = [
@@ -64,6 +64,15 @@ ignore-vcs = true
 include = [
   "src/bitcaster_sdk/**/*.*",
 ]
+exclude = [
+  "src/bitcaster_sdk/**/~*.*",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = [ "src/bitcaster_sdk" ]
+
+[tool.check-manifest]
+ignore = """
+Makefile
+*.sqlite
+.tox/*"""
