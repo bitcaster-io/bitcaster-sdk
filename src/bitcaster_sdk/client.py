@@ -49,7 +49,7 @@ class Client(AbstractClient):
             response = self.transport.get("/api/system/ping/")
             self.assert_response(response)
             return response.json()
-        except requests.exceptions.ConnectionError as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
             raise ConnectionError(f"Connection Error: {self.api_url}") from e
         except Exception as e:
             logger.exception(e)

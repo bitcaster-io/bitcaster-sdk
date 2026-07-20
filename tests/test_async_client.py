@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 import responses as responses_lib
+from requests.exceptions import ReadTimeout
 from responses import RequestsMock
 
 from bitcaster_sdk.async_client import AsyncClient
@@ -137,6 +138,15 @@ class TestPing:
         with pytest.raises(ConnectionError):
             future.result(timeout=5)
 
+    def test_timeout_maps_to_connection_error(self, client_setup) -> None:
+        rsps, client = client_setup
+        rsps.add(responses_lib.GET, f"{client.api_url}system/ping/", body=ReadTimeout("timed out"))
+
+        future = client.ping()
+
+        with pytest.raises(ConnectionError, match="Connection Error"):
+            future.result(timeout=5)
+
 
 class TestList:
     def test_list_events(self, client_setup, response_events) -> None:
@@ -197,11 +207,31 @@ class TestAddUpdateUser:
         assert result["first_name"] == "Updated"
 
 
+class TestTimeout:
+    def test_trigger_passes_timeout_to_request(self, bae: str) -> None:
+        with RequestsMock() as rsps, AsyncClient(bae, timeout=7) as client:
+            url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
+            rsps.add(responses_lib.POST, url, json={"occurrence": 15}, status=201)
+            client.set_domain("bitcaster", "bitcaster")
+
+            future = client.trigger_event("a1", context={})
+
+            assert future.result(timeout=5) == {"occurrence": 15}
+            assert rsps.calls[0].request.req_kwargs["timeout"] == 7
+
+
 class TestInit:
     def test_valid_url(self, bae: str) -> None:
         client = AsyncClient(bae)
         assert client.transport is not None
         assert client.base_url == "http://app.bitcaster.io/api/o/os4d/"
+
+    def test_configures_transport_timeout(self, bae: str) -> None:
+        client = AsyncClient(bae, timeout=(3, 7))
+
+        assert client.transport is not None
+        assert client.transport.timeout == (3, 7)
+        client.close()
 
     def test_no_bae_creates_no_transport(self) -> None:
         client = AsyncClient()

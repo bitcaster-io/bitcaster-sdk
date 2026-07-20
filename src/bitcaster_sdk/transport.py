@@ -16,25 +16,25 @@ class Transport(AbstractTransport):
         if self.debug:
             logger.info(f"get {self.last_url}")
 
-        return self.session.get(self.last_url)
+        return self.session.get(self.last_url, timeout=self.timeout)
 
     def post(self, path: str, arguments: dict[str, Any]) -> requests.Response:
         if self.debug:
             logger.info(f"post {path}")
         with self.with_headers({"Content-Type": "application/json"}):
             self.last_url = self.get_url(path)
-            return self.session.post(self.last_url, json=arguments)
+            return self.session.post(self.last_url, json=arguments, timeout=self.timeout)
 
     def patch(self, path: str, arguments: dict[str, Any]) -> requests.Response:
         if self.debug:
             logger.info(f"post {path}")
         with self.with_headers({"Content-Type": "application/json"}):
             self.last_url = self.get_url(path)
-            return self.session.patch(self.last_url, json=arguments)
+            return self.session.patch(self.last_url, json=arguments, timeout=self.timeout)
 
     def put(self, path: str, arguments: dict[str, Any]) -> requests.Response:
         if self.debug:
             logger.info(f"post {path}")
         with self.with_headers({"Content-Type": "application/json"}):
             self.last_url = self.get_url(path)
-            return self.session.put(self.last_url, json=arguments)
+            return self.session.put(self.last_url, json=arguments, timeout=self.timeout)

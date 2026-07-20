@@ -4,15 +4,15 @@ from typing import TYPE_CHECKING, Tuple
 
 import pytest
 import responses as responses_lib
+from requests.exceptions import ReadTimeout
 
+from bitcaster_sdk.client import Client
 from bitcaster_sdk.exceptions import ConfigurationError
 from bitcaster_sdk.transport import Transport
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
     from responses import RequestsMock
-
-    from bitcaster_sdk.client import Client
 
 
 def test_trigger(client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
@@ -57,6 +57,56 @@ def test_list_events(client_setup: Tuple[RequestsMock, Client], response_events:
 def test_client_parse_url(client: "Client") -> None:
     with pytest.raises(ConfigurationError):
         client.parse_url("")
+
+
+def test_client_configures_transport_timeout(bae: str) -> None:
+    client = Client(bae, timeout=7)
+
+    assert client.transport is not None
+    assert client.transport.timeout == 7
+
+
+def test_trigger_passes_timeout_to_request(bae: str) -> None:
+    client = Client(bae, timeout=7)
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
+    client.set_domain("bitcaster", "bitcaster")
+
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.POST, url, json={"occurrence": 15}, status=201)
+        result = client.trigger_event("a1", context={})
+
+        assert result == {"occurrence": 15}
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
+
+
+def test_ping_passes_timeout_to_request(bae: str) -> None:
+    client = Client(bae, timeout=7)
+
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
+
+        assert client.ping() == {"token": "Key1", "slug": "core"}
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
+
+
+def test_default_timeout_preserves_requests_behavior(bae: str) -> None:
+    client = Client(bae)
+
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.GET, f"{client.api_url}system/ping/", json={"token": "Key1", "slug": "core"})
+
+        assert client.ping() == {"token": "Key1", "slug": "core"}
+        assert rsps.calls[0].request.req_kwargs["timeout"] is None
+
+
+def test_ping_maps_request_timeout_to_connection_error(bae: str) -> None:
+    client = Client(bae, timeout=7)
+
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.GET, f"{client.api_url}system/ping/", body=ReadTimeout("timed out"))
+
+        with pytest.raises(ConnectionError, match="Connection Error"):
+            client.ping()
 
 
 def test_list_users(client_setup: Tuple[RequestsMock, Client], response_users: str) -> None:
@@ -142,11 +192,12 @@ def test_update_user(client_setup: Tuple[RequestsMock, Client]) -> None:
 
 
 def test_transport_put() -> None:
-    transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11")
+    transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11", timeout=7)
     with responses_lib.RequestsMock() as rsps:
         rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/", json={"ok": True})
         resp = transport.put("u/", {"email": "a@b.com"})
         assert resp.json() == {"ok": True}
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
 
 
 class TestDomain:

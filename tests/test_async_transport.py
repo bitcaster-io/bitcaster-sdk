@@ -12,9 +12,14 @@ def transport() -> AsyncTransport:
 
 
 @pytest.fixture
-def transport_setup(transport: AsyncTransport):
+def timeout_transport() -> AsyncTransport:
+    return AsyncTransport("http://app.bitcaster.io/api/o/os4d/", "key-11", timeout=7)
+
+
+@pytest.fixture
+def timeout_transport_setup(timeout_transport: AsyncTransport):
     with responses_lib.RequestsMock() as rsps:
-        yield rsps, transport
+        yield rsps, timeout_transport
 
 
 class TestGetUrl:
@@ -29,43 +34,47 @@ class TestGetUrl:
 
 
 class TestGet:
-    def test_success(self, transport_setup) -> None:
-        rsps, transport = transport_setup
+    def test_success(self, timeout_transport_setup) -> None:
+        rsps, transport = timeout_transport_setup
         rsps.add(responses_lib.GET, "http://app.bitcaster.io/api/o/os4d/p/", json=[{"slug": "p1"}])
         future = transport.get("p/")
         response = future.result(timeout=5)
         assert response.json() == [{"slug": "p1"}]
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
 
     def test_url_tracking(self, transport: AsyncTransport) -> None:
         assert transport.last_url == ""
 
 
 class TestPost:
-    def test_success(self, transport_setup) -> None:
-        rsps, transport = transport_setup
+    def test_success(self, timeout_transport_setup) -> None:
+        rsps, transport = timeout_transport_setup
         rsps.add(responses_lib.POST, "http://app.bitcaster.io/api/o/os4d/u/", json={"email": "a@b.com"}, status=201)
         future = transport.post("u/", {"email": "a@b.com"})
         response = future.result(timeout=5)
         assert response.json() == {"email": "a@b.com"}
         assert response.status_code == 201
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
 
 
 class TestPatch:
-    def test_success(self, transport_setup) -> None:
-        rsps, transport = transport_setup
+    def test_success(self, timeout_transport_setup) -> None:
+        rsps, transport = timeout_transport_setup
         rsps.add(responses_lib.PATCH, "http://app.bitcaster.io/api/o/os4d/u/a%40b.com/", json={"email": "a@b.com"})
         future = transport.patch("u/a%40b.com/", {"first_name": "A"})
         response = future.result(timeout=5)
         assert response.json() == {"email": "a@b.com"}
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
 
 
 class TestPut:
-    def test_success(self, transport_setup) -> None:
-        rsps, transport = transport_setup
+    def test_success(self, timeout_transport_setup) -> None:
+        rsps, transport = timeout_transport_setup
         rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/a%40b.com/", json={"email": "a@b.com"})
         future = transport.put("u/a%40b.com/", {"email": "a@b.com"})
         response = future.result(timeout=5)
         assert response.json() == {"email": "a@b.com"}
+        assert rsps.calls[0].request.req_kwargs["timeout"] == 7
 
 
 class TestSubmit:

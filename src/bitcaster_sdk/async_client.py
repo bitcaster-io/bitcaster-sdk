@@ -56,10 +56,10 @@ class AsyncClient(AbstractClient):
                 raise RuntimeError("client not initialized")
             try:
                 self.transport.last_url = url
-                response = self.transport.session.get(url)
+                response = self.transport.session.get(url, timeout=self.transport.timeout)
                 self.assert_response(response)
                 return response.json()
-            except requests.exceptions.ConnectionError as e:
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
                 raise ConnectionError(f"Connection Error: {self.api_url}") from e
 
         return self._submit(_call)
@@ -77,7 +77,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -96,7 +96,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -115,7 +115,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -134,7 +134,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -153,7 +153,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -172,7 +172,7 @@ class AsyncClient(AbstractClient):
             if self.transport is None:
                 raise RuntimeError("client not initialized")
             self.transport.last_url = url
-            response = self.transport.session.get(url)
+            response = self.transport.session.get(url, timeout=self.transport.timeout)
             self.assert_response(response)
             return response.json()
 
@@ -202,7 +202,11 @@ class AsyncClient(AbstractClient):
             )
             self.transport.last_url = url
             with self.transport.with_headers({"Content-Type": "application/json"}):
-                response = self.transport.session.post(url, json={"context": context or {}, "options": options or {}})
+                response = self.transport.session.post(
+                    url,
+                    json={"context": context or {}, "options": options or {}},
+                    timeout=self.transport.timeout,
+                )
             if response.status_code in [404]:
                 raise EventNotFoundError(f"Event not found at {url}")
             self.assert_response(response)
@@ -232,6 +236,7 @@ class AsyncClient(AbstractClient):
                         "last_name": last_name or "",
                         "custom_fields": custom,
                     },
+                    timeout=self.transport.timeout,
                 )
             self.assert_response(response)
             return response.json()
@@ -268,6 +273,7 @@ class AsyncClient(AbstractClient):
                         "custom_fields": custom_fields,
                         "_mode": mode,
                     },
+                    timeout=self.transport.timeout,
                 )
             self.assert_response(response)
             return response.json()
