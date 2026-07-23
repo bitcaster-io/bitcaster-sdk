@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import http.server
+import json
 import os
+import socketserver
 from typing import TYPE_CHECKING
+from urllib.parse import parse_qs, urlparse
 
 import click
 from click import echo, secho
@@ -219,6 +223,80 @@ def trigger(
 
 
 from . import users  # noqa
+
+
+@cli.command(name="serve", help="Start a fake Bitcaster server for development. Dumps requests to stdout.")
+@click.option("--port", "-p", default=9000, type=int, show_default=True, help="Port to listen on")
+@click.option(
+    "--response-code", "-c", "response_code", default=200, type=int, show_default=True,
+    help="HTTP status code to return",
+)
+@click.option("--response-body", "-b", "response_body", default="{}", show_default=True, help="JSON body to return")
+@click.pass_context
+def serve(ctx: Context, port: int, response_code: int, response_body: str) -> None:
+    try:
+        body = json.loads(response_body)
+    except json.JSONDecodeError as e:
+        raise click.ClickException(f"Invalid JSON in --response-body: {e}") from None
+
+    class FakeBitcasterHandler(http.server.BaseHTTPRequestHandler):
+        def log_message(self, fmt_str: str, *args: object) -> None:  # type: ignore[override]
+            secho(fmt_str % args, fg="yellow")
+
+        def _handle_request(self, method: str) -> None:
+            parsed = urlparse(self.path)
+            query = parse_qs(parsed.query)
+
+            secho(f"\n{'='*60}", fg="cyan")
+            secho(f"{method} {parsed.path}", fg="cyan", bold=True)
+            if query:
+                secho(f"Query: {query}", fg="magenta")
+            secho("Headers:", fg="green", bold=True)
+
+            for key, value in self.headers.items():
+                secho(f"  {key}: {value}", fg="green")
+
+            if content_length := int(self.headers.get("Content-Length", 0)):
+                raw = self.rfile.read(content_length)
+                body_text = raw.decode("utf-8")
+                try:
+                    body_json = json.loads(body_text)
+                    secho(f"Body:\n{json.dumps(body_json, indent=2)}", fg="yellow")
+                except json.JSONDecodeError:
+                    secho(f"Body:\n{body_text}", fg="yellow")
+            else:
+                secho("Body: (empty)", fg="yellow")
+            secho(f"{'='*60}\n", fg="cyan")
+
+            self.send_response(response_code)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(body).encode("utf-8"))
+
+        def do_GET(self) -> None:  # type: ignore[override]
+            self._handle_request("GET")
+
+        def do_POST(self) -> None:  # type: ignore[override]
+            self._handle_request("POST")
+
+        def do_PATCH(self) -> None:  # type: ignore[override]
+            self._handle_request("PATCH")
+
+        def do_PUT(self) -> None:  # type: ignore[override]
+            self._handle_request("PUT")
+
+    class ReusableTCPServer(socketserver.TCPServer):
+        allow_reuse_address = True
+        timeout = None
+
+    try:
+        with ReusableTCPServer(("0.0.0.0", port), FakeBitcasterHandler) as httpd:
+            secho(f"Fake Bitcaster server listening on port {port}", fg="green", bold=True)
+            secho("Press Ctrl+C to stop\n", fg="yellow")
+            httpd.serve_forever()
+    except OSError as e:
+        raise click.ClickException(f"Failed to start server: {e}") from None
+
 
 if __name__ == "__main__":
     cli(obj={}, auto_envvar_prefix="BITCASTER")
