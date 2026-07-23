@@ -48,14 +48,13 @@ client.trigger("project", "app", "event", context={"order_id": "456"})
 from bitcaster_sdk.async_client import AsyncClient
 
 client = AsyncClient("https://key@server/api/o/org/")
-future = client.trigger("project", "app", "event", context={"order_id": "456"})
+client.trigger("project", "app", "event", context={"order_id": "456"})
 
 # Do other work while the request is in-flight
 print("Request queued, continuing...")
 
-# Get the result when needed
-result = future.result(timeout=10)
-print(result)
+# Ensure the request completes before exiting
+client.flush()
 ```
 
 ## Ping the server
