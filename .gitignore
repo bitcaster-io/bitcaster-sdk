@@ -12,6 +12,7 @@ __pycache__/
 !.trivyignore
 src/bitcaster_sdk/version.py
 coverage.xml
+junit.xml
 Makefile
 site
 dist/

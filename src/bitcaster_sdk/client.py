@@ -22,6 +22,8 @@ from .log import logger
 from .transport import Transport
 
 if TYPE_CHECKING:
+    from bitcaster_sdk.abstract_transport import AbstractTransport
+
     from .types import JSON
 
 ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
@@ -33,15 +35,16 @@ class Client:
         r"(?P<host>.*)\/api\/"
         r"o\/(?P<organization>.+)\/$"
     )
+    _transport_class: type[AbstractTransport] = Transport
 
     def __init__(self, bae: str | None = None, debug: bool = False) -> None:
         self.options: dict[str, Any] = {}
-        self.transport: Transport | None = None
+        self.transport: AbstractTransport | None = None
         if bae is not None:
             self.bae = bae
             self.options = {"debug": debug, "shutdown_timeout": 10}
             self.parse_url(bae)
-            self.transport = Transport(**self.options)
+            self.transport = self._transport_class(**self.options)
 
     def parse_url(self, url: str) -> None:
         if not url.endswith("/"):

@@ -1,37 +1,15 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Any, Iterator
-from urllib.parse import urlparse
+from typing import TYPE_CHECKING, Any
 
-import requests
-
+from bitcaster_sdk.abstract_transport import AbstractTransport
 from .log import logger
 
+if TYPE_CHECKING:
+    import requests
 
-class Transport:
-    def __init__(self, base_url: str, token: str, **kwargs: Any) -> None:
-        self.session = requests.Session()
-        self.base_url = base_url
-        self.debug = kwargs.get("debug")
-        self.session.headers.update({"Authorization": f"Key {token}", "User-Agent": "Bitcaster-SDK"})
-        self.conn = urlparse(base_url)
 
-    def get_url(self, path: str) -> str:
-        if path.startswith("http:"):
-            return path
-        if path.startswith("/"):
-            return f"{self.conn.scheme}://{self.conn.netloc}{path}"
-
-        return f"{self.conn.scheme}://{self.conn.netloc}{self.conn.path}{path}"
-
-    @contextmanager
-    def with_headers(self, values: dict[str, str]) -> Iterator[None]:
-        c = dict(self.session.headers)
-        self.session.headers.update(values)
-        yield
-        self.session.headers = c
-
+class Transport(AbstractTransport):
     def get(self, path: str) -> requests.Response:
         self.last_url = self.get_url(path)
 

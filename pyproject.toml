@@ -37,6 +37,7 @@ scripts.bitcaster = "bitcaster_sdk:__cli__.cli"
 
 [dependency-groups]
 dev = [
+  "diff-cover>=10.4",
   "pre-commit",
   "pytest",
   "pytest-coverage",

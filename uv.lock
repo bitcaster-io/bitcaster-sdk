@@ -36,6 +36,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "diff-cover" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-coverage" },
@@ -69,6 +70,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "diff-cover", specifier = ">=10.4.0" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-coverage" },
@@ -350,6 +352,21 @@ wheels = [
 [package.optional-dependencies]
 toml = [
     { name = "tomli", marker = "python_full_version <= '3.11'" },
+]
+
+[[package]]
+name = "diff-cover"
+version = "10.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "chardet" },
+    { name = "jinja2" },
+    { name = "pluggy" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/04/9e/e4a12c52db1c9b51923070475391def9d2a08e4ee90bb57c40a4258f2750/diff_cover-10.4.0.tar.gz", hash = "sha256:04daa3254c8494915e3afde79f89b60dbc8c4cbda0fbd11ae2c7e0014f71b37c", size = 107663, upload-time = "2026-07-22T01:56:34.905Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/29/3f/1fceb879e942816667ba47a1b31d92f90847db7a5ea4793e1caee22bac90/diff_cover-10.4.0-py3-none-any.whl", hash = "sha256:fbb185f165b6faa118e44fdbe63a7d6eb36d86e1eea75a74f07496a2bdeac5c1", size = 59508, upload-time = "2026-07-22T01:56:33.695Z" },
 ]
 
 [[package]]
