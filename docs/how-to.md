@@ -191,6 +191,57 @@ bitcaster --help
 
 Set the endpoint via `--bae` or the `BITCASTER_BAE` environment variable.
 
+## Django integration
+
+### Notify Bitcaster on user creation/update via signal
+
+Connect to Django's `post_save` signal for the `User` model to fire a Bitcaster event whenever a user is created or updated:
+
+```python
+# your_app/signals.py
+from django.contrib.auth import get_user_model
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from bitcaster_sdk.async_client import AsyncClient
+
+User = get_user_model()
+
+client = AsyncClient("https://key@server/api/o/org/")
+
+
+@receiver(post_save, sender=User)
+def notify_bitcaster_on_user_save(sender, instance, created, **kwargs):
+    event = "user-created" if created else "user-updated"
+    client.trigger(
+        "my-project",
+        "my-app",
+        event,
+        context={
+            "user_id": str(instance.id),
+            "email": instance.email,
+            "username": instance.username or "",
+        },
+    )
+```
+
+Wire the signal in your app's config:
+
+```python
+# your_app/apps.py
+from django.apps import AppConfig
+
+
+class YourAppConfig(AppConfig):
+    default_auto_field = "django.db.models.BigAutoField"
+    name = "your_app"
+
+    def ready(self):
+        import your_app.signals  # noqa: F401
+```
+
+The `AsyncClient` is ideal here — the signal handler returns immediately while the HTTP request runs in a background thread, keeping your response time fast.
+
 ## Error handling
 
 The SDK raises typed exceptions for common failure modes:
