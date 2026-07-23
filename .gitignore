@@ -10,6 +10,7 @@ __pycache__/
 !.mypy.ini
 !.pre-commit-config.yaml
 !.trivyignore
+*.cover
 src/bitcaster_sdk/version.py
 coverage.xml
 junit.xml
