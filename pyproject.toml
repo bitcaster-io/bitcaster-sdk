@@ -11,6 +11,9 @@ description = "Bitcaster Python SDK"
 readme = "README.md"
 
 license = { text = "MIT" }
+
+[project.urls]
+Homepage = "https://github.com/bitcaster-io/bitcaster-sdk"
 maintainers = [
   { name = "sax", email = "s.apostolico@gmail.com" },
   { name = "mark", email = "hanarero@gmail.com" },
