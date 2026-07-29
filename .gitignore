@@ -17,3 +17,5 @@ junit.xml
 Makefile
 site
 dist/
+docs-output/
+junit.xml

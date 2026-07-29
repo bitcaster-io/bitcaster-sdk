@@ -76,7 +76,8 @@ ignore = [
     "PLR0912",
     "PLR0913",
     "PLR0915",
-    "PLW0603"
+    "PLW0603",
+    "S104",  # binding to all interfaces - intentional for dev server
 ]
 
 [format]

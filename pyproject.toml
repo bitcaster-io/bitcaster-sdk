@@ -33,6 +33,8 @@ dependencies = [
   "humanfriendly",
   "requests",
 ]
+urls.Homepage = "https://github.com/bitcaster-io/bitcaster-sdk"
+urls.Repository = "https://github.com/bitcaster-io/bitcaster-sdk"
 scripts.bitcaster = "bitcaster_sdk:__cli__.cli"
 
 [dependency-groups]
