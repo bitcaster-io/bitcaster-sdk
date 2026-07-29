@@ -20,11 +20,11 @@ jobs:
     name: Generate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Restore cached venv
         id: cache-venv-restore
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           path: |
             .cache-uv/
@@ -40,7 +40,7 @@ jobs:
       - name: Cache venv
         if: steps.cache-venv-restore.outputs.cache-hit != 'true'
         id: cache-venv-save
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           path: |
             .cache-uv/
@@ -48,7 +48,7 @@ jobs:
           key: ${{ matrix.python-version }}-${{matrix.django-version}}-venv
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docs-output
 
@@ -62,4 +62,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
