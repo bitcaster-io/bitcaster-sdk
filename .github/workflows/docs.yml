@@ -34,7 +34,7 @@ jobs:
       - uses: yezz123/setup-uv@v4
       - name: Build Doc
         run: |
-          uv sync --extra docs
+          uv sync --group docs
           PYTHONPATH=./src uv run --cache-dir .cache-uv/ mkdocs build -d ./docs-output
 
       - name: Cache venv
