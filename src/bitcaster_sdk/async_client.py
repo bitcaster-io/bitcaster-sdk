@@ -1,6 +1,9 @@
+"""Bitcaster SDK async HTTP client."""
+
 from __future__ import annotations
 
 import urllib.parse
+import warnings
 from concurrent.futures import Future
 from typing import TYPE_CHECKING, Any
 
@@ -9,7 +12,7 @@ import requests.exceptions
 from bitcaster_sdk.async_transport import AsyncTransport
 from bitcaster_sdk.exceptions import EventNotFoundError
 
-from .client import Client
+from .abstract_client import AbstractClient
 from .helpers import JsonUpdateMode
 
 if TYPE_CHECKING:
@@ -18,7 +21,18 @@ if TYPE_CHECKING:
     from .types import JSON
 
 
-class AsyncClient(Client):
+class AsyncClient(AbstractClient):
+    """Non-blocking Bitcaster client.
+
+    Every API method returns a :class:`~concurrent.futures.Future` and
+    executes the HTTP request on a background thread, leaving the caller
+    free to do other work.
+
+    See :class:`~bitcaster_sdk.client.Client` for constructor arguments,
+    properties, and shared method documentation. Only overridden methods
+    and AsyncClient-specific methods are documented below.
+    """
+
     _transport_class: type[AbstractTransport] = AsyncTransport
 
     def _submit(self, fn: Any, *args: Any, **kwargs: Any) -> Future[Any]:
@@ -29,6 +43,12 @@ class AsyncClient(Client):
         return self.transport.submit(fn, *args, **kwargs)
 
     def ping(self) -> Future[dict[str, Any]]:
+        """Check connectivity with the Bitcaster server (async).
+
+        Returns:
+            A Future that resolves to a dict with server information.
+
+        """
         url = self.transport.get_url("/api/system/ping/") if self.transport else ""
 
         def _call() -> dict[str, Any]:
@@ -45,6 +65,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_events(self, project: str, application: str) -> Future[list[dict[str, Any]]]:
+        """List events for a given project and application (async).
+
+        Returns:
+            A Future that resolves to a list of event dicts.
+
+        """
         url = self.transport.get_url(f"p/{project}/a/{application}/e/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -58,6 +84,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_users(self) -> Future[list[dict[str, Any]]]:
+        """List organization users (async).
+
+        Returns:
+            A Future that resolves to a list of user dicts.
+
+        """
         url = self.transport.get_url("u/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -71,6 +103,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_distribution_lists(self, project: str) -> Future[list[dict[str, Any]]]:
+        """List distribution lists for a project (async).
+
+        Returns:
+            A Future that resolves to a list of distribution list dicts.
+
+        """
         url = self.transport.get_url(f"p/{project}/d/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -84,6 +122,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_projects(self) -> Future[list[dict[str, Any]]]:
+        """List organization projects (async).
+
+        Returns:
+            A Future that resolves to a list of project dicts.
+
+        """
         url = self.transport.get_url("p/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -97,6 +141,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_applications(self, project: str) -> Future[list[dict[str, Any]]]:
+        """List applications for a project (async).
+
+        Returns:
+            A Future that resolves to a list of application dicts.
+
+        """
         url = self.transport.get_url(f"p/{project}/a/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -110,6 +160,12 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def list_members(self, project: str, distribution_list: str) -> Future[list[dict[str, Any]]]:
+        """List distribution list members (async).
+
+        Returns:
+            A Future that resolves to a list of member dicts.
+
+        """
         url = self.transport.get_url(f"p/{project}/d/{distribution_list}/m/") if self.transport else ""
 
         def _call() -> list[dict[str, Any]]:
@@ -131,6 +187,13 @@ class AsyncClient(Client):
         options: dict[str, str] | None = None,
         cid: str | None = None,
     ) -> Future[dict[str, Any]]:
+        """Use :meth:`set_domain` + :meth:`trigger_event` instead."""
+        warnings.warn(
+            "trigger() is deprecated, use trigger_event() with set_domain() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         def _call() -> dict[str, Any]:
             if self.transport is None:
                 raise RuntimeError("client not initialized")
@@ -148,6 +211,13 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def add_user(self, email: str, first_name: str, last_name: str, custom: JSON | None = None) -> Future[JSON]:
+        """Add a user to the current organization (async).
+
+        Returns:
+            A Future that resolves to the created user dict.
+
+        """
+
         def _call() -> JSON:
             if self.transport is None:
                 raise RuntimeError("client not initialized")
@@ -176,6 +246,12 @@ class AsyncClient(Client):
         custom_fields: JSON | None = None,
         mode: str = JsonUpdateMode.IGNORE,
     ) -> Future[JSON]:
+        """Update an existing user (async).
+
+        Returns:
+            A Future that resolves to the updated user dict.
+
+        """
         uid = urllib.parse.quote(email)
 
         def _call() -> JSON:
@@ -199,6 +275,16 @@ class AsyncClient(Client):
         return self._submit(_call)
 
     def flush(self, timeout: float | None = None) -> bool:
+        """Wait for all queued requests to complete.
+
+        Args:
+            timeout: Maximum seconds to wait. Falls back to
+                ``shutdown_timeout`` (default 10).
+
+        Returns:
+            ``True`` if all requests completed, ``False`` on timeout.
+
+        """
         if self.transport is None:
             return True
         if timeout is None:
@@ -206,6 +292,14 @@ class AsyncClient(Client):
         return self.transport.flush(timeout)
 
     def close(self, timeout: float | None = None) -> None:
+        """Flush pending work and shut down the background worker.
+
+        The client is unusable after calling this method.
+
+        Args:
+            timeout: Maximum seconds to wait for pending requests.
+
+        """
         if self.transport is None:
             return
         self.flush(timeout)
@@ -213,7 +307,9 @@ class AsyncClient(Client):
         self.transport = None
 
     def __enter__(self) -> AsyncClient:
+        """Enter the runtime context."""
         return self
 
     def __exit__(self, *args: Any) -> None:
+        """Exit the runtime context and shut down the background worker."""
         self.close()

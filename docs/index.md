@@ -29,7 +29,15 @@ Trigger an event:
 from bitcaster_sdk.client import Client
 
 client = Client("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/")
-client.trigger("my-project", "my-app", "my-event", context={"message": "Hello from the SDK!"})
+client.set_domain("my-project", "my-app")
+client.trigger_event("my-event", context={"message": "Hello from the SDK!"})
+```
+
+You can also pass `project` and `application` at construction time:
+
+```python
+client = Client("https://<API_KEY>@<SERVER>/api/o/<org>/", project="my-project", application="my-app")
+client.trigger_event("my-event", context={"message": "Hello from the SDK!"})
 ```
 
 ## More Information

@@ -2,12 +2,12 @@ import json
 from json import JSONDecodeError
 
 import click
-from click import secho
+from click import echo, secho
 
 import bitcaster_sdk
 
 from . import client
-from .__cli__ import TITLE, cli
+from .__cli__ import TITLE, cli, json_output_option
 from .exceptions import ValidationError
 from .helpers import JsonUpdateMode
 
@@ -18,10 +18,16 @@ def users() -> None:
 
 
 @users.command(name="list", help="displays Organization's Users")
-def list_() -> None:
-    fmt = "{:>5}: {:<30} {:<30} {:^8} {:^8}"
+@json_output_option
+@click.pass_context
+def list_(ctx: click.Context, json_output: bool = False) -> None:
+    ctx.obj["json"] = ctx.obj.get("json", False) or json_output
     try:
         ret = bitcaster_sdk.list_users()
+        if ctx.obj["json"]:
+            echo(json.dumps(ret, indent=2))
+            return
+        fmt = "{:>5}: {:<30} {:<30} {:^8} {:^8}"
         secho(TITLE.format("Organization users"), fg="green")
         secho(fmt.format("#", "Username", "Email", "active", "locked"))
         for n, e in enumerate(ret, 1):
@@ -50,13 +56,21 @@ def list_() -> None:
 @click.option("--first-name", "-f", default="")
 @click.option("--last-name", "-l", default="")
 @click.option("--custom", "-c", default="{}")
-def add_(email: str, first_name: str, last_name: str, custom: str) -> None:
+@json_output_option
+@click.pass_context
+def add_(
+    ctx: click.Context, email: str, first_name: str, last_name: str, custom: str, json_output: bool = False
+) -> None:
+    ctx.obj["json"] = ctx.obj.get("json", False) or json_output
     try:
         c = json.loads(custom or "{}")
+        res = client.ctx.get().add_user(email, first_name, last_name, c)
+        if ctx.obj["json"]:
+            echo(json.dumps(res, indent=2))
+        else:
+            echo(res)
     except Exception:
         raise click.ClickException("Invalid custom fields value. It must be a valid json string") from None
-    else:
-        client.ctx.get().add_user(email, first_name, last_name, c)
 
 
 @users.command(name="update", help="add new user to the current organization")
@@ -65,11 +79,19 @@ def add_(email: str, first_name: str, last_name: str, custom: str) -> None:
 @click.option("--last-name", "-l", default="")
 @click.option("--custom", "-c", default="{}")
 @click.option("--mode", "-m", default=JsonUpdateMode.IGNORE, type=click.Choice(JsonUpdateMode.choices()))
-def update_(email: str, first_name: str, last_name: str, custom: str, mode: str) -> None:
+@json_output_option
+@click.pass_context
+def update_(
+    ctx: click.Context, email: str, first_name: str, last_name: str, custom: str, mode: str, json_output: bool = False
+) -> None:
+    ctx.obj["json"] = ctx.obj.get("json", False) or json_output
     try:
         c = json.loads(custom or "{}")
         res = client.ctx.get().update_user(email, first_name, last_name, custom_fields=c, mode=mode)
-        click.echo(res)
+        if ctx.obj["json"]:
+            echo(json.dumps(res, indent=2))
+        else:
+            echo(res)
     except ValidationError as e:
         click.secho(str(e), fg="red")
         click.get_current_context().exit(1)

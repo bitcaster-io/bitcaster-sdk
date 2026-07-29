@@ -28,7 +28,8 @@ Or pass the URL directly when creating a client.
 import bitcaster_sdk
 
 bitcaster_sdk.init()
-bitcaster_sdk.trigger("project-slug", "application-slug", "event-slug", context={})
+bitcaster_sdk.set_domain("project-slug", "application-slug")
+bitcaster_sdk.trigger_event("event-slug", context={})
 ```
 
 ### Using the `Client` directly
@@ -37,7 +38,15 @@ bitcaster_sdk.trigger("project-slug", "application-slug", "event-slug", context=
 from bitcaster_sdk.client import Client
 
 client = Client("https://key@server/api/o/org/")
-client.trigger("project", "app", "event", context={"order_id": "456"})
+client.set_domain("project", "app")
+client.trigger_event("event", context={"order_id": "456"})
+```
+
+Or set project/application at construction time:
+
+```python
+client = Client("https://key@server/api/o/org/", project="project", application="app")
+client.trigger_event("event", context={"order_id": "456"})
 ```
 
 ### Async (non-blocking)
@@ -46,7 +55,8 @@ client.trigger("project", "app", "event", context={"order_id": "456"})
 from bitcaster_sdk.async_client import AsyncClient
 
 client = AsyncClient("https://key@server/api/o/org/")
-client.trigger("project", "app", "event", context={"order_id": "456"})
+client.set_domain("project", "app")
+client.trigger_event("event", context={"order_id": "456"})
 
 # Do other work while the request is in-flight
 print("Request queued, continuing...")
@@ -54,6 +64,9 @@ print("Request queued, continuing...")
 # Ensure the request completes before exiting
 client.flush()
 ```
+
+For the full API reference see the [Sync Client](client.md) and
+[Async Client](async-client.md) pages.
 
 ## Ping the server
 
@@ -205,15 +218,13 @@ from bitcaster_sdk.async_client import AsyncClient
 
 User = get_user_model()
 
-client = AsyncClient("https://key@server/api/o/org/")
+client = AsyncClient("https://key@server/api/o/org/", project="my-project", application="my-app")
 
 
 @receiver(post_save, sender=User)
 def notify_bitcaster_on_user_save(sender, instance, created, **kwargs):
     event = "user-created" if created else "user-updated"
-    client.trigger(
-        "my-project",
-        "my-app",
+    client.trigger_event(
         event,
         context={
             "user_id": str(instance.id),

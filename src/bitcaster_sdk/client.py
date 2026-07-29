@@ -1,22 +1,22 @@
+"""Bitcaster SDK sync HTTP client."""
+
 from __future__ import annotations
 
 import os
-import re
 import urllib.parse
+import warnings
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any
 
 import requests.exceptions
-from requests import Response
 
 from bitcaster_sdk.exceptions import (
-    AuthenticationError,
-    AuthorizationError,
     ConfigurationError,
     EventNotFoundError,
     ValidationError,
 )
 
+from .abstract_client import AbstractClient
 from .helpers import JsonUpdateMode
 from .log import logger
 from .transport import Transport
@@ -29,69 +29,22 @@ if TYPE_CHECKING:
 ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
 
 
-class Client:
-    url_regex = (
-        r"(?P<schema>https?):\/\/(?P<token>.*)@"
-        r"(?P<host>.*)\/api\/"
-        r"o\/(?P<organization>.+)\/$"
-    )
+class Client(AbstractClient):
+    """Sync HTTP client for the Bitcaster REST API.
+
+    Every method blocks on the HTTP request and returns the parsed response
+    directly.
+    """
+
     _transport_class: type[AbstractTransport] = Transport
 
-    def __init__(self, bae: str | None = None, debug: bool = False) -> None:
-        self.options: dict[str, Any] = {}
-        self.transport: AbstractTransport | None = None
-        if bae is not None:
-            self.bae = bae
-            self.options = {"debug": debug, "shutdown_timeout": 10}
-            self.parse_url(bae)
-            self.transport = self._transport_class(**self.options)
-
-    def parse_url(self, url: str) -> None:
-        if not url.endswith("/"):
-            url = url + "/"
-        m = re.compile(self.url_regex).match(url)
-        if not m:
-            raise ConfigurationError(
-                f"""Unable to parse url: '{url}'.
-must match {self.url_regex}"""
-            )
-        self.options.update(m.groupdict())
-        self.options["base_url"] = self.base_url
-
-    @property
-    def base_url(self) -> str:
-        return "{schema}://{host}/api/o/{organization}/".format(**self.options)
-
-    @property
-    def api_url(self) -> str:
-        return "{schema}://{host}/api/".format(**self.options)
-
-    @property
-    def last_called_url(self) -> str:
-        return self.transport.last_url
-
-    def assert_response(self, response: "Response") -> None:
-        if response.status_code in [
-            400,
-        ]:
-            raise ValidationError(f"Invalid request: {response.json()}")
-        if response.status_code in [
-            401,
-        ]:
-            raise AuthenticationError(f"Invalid token: {response.url}")
-
-        if response.status_code in [
-            403,
-        ]:
-            raise AuthorizationError(f"Insufficient grants: {response.json()}")
-
-        if response.status_code in [404]:
-            raise EventNotFoundError(f"Invalid Url: {response.url} ")
-
-        if response.status_code not in [201, 200]:
-            raise ConnectionError(response.status_code, response.url)
-
     def ping(self) -> dict[str, Any]:
+        """Check connectivity with the Bitcaster server.
+
+        Returns:
+            A dict with server identifying information (e.g. ``token``, ``slug``).
+
+        """
         try:
             response = self.transport.get("/api/system/ping/")
             self.assert_response(response)
@@ -103,6 +56,17 @@ must match {self.url_regex}"""
             raise
 
     def list_events(self, project: str, application: str) -> list[dict[str, Any]]:
+        """List events for a given project and application.
+
+        Args:
+            project: Project slug.
+            application: Application slug.
+
+        Returns:
+            A list of event dicts, each containing ``name``, ``slug``,
+            ``active``, ``locked``, ``description``.
+
+        """
         try:
             response = self.transport.get(f"p/{project}/a/{application}/e/")
             self.assert_response(response)
@@ -112,6 +76,13 @@ must match {self.url_regex}"""
             raise e
 
     def list_users(self) -> list[dict[str, Any]]:
+        """List users in the current organization.
+
+        Returns:
+            A list of user dicts, each containing ``email``, ``username``,
+            ``is_active``, ``locked``, etc.
+
+        """
         try:
             response = self.transport.get("u/")
             self.assert_response(response)
@@ -121,6 +92,15 @@ must match {self.url_regex}"""
             raise
 
     def list_distribution_lists(self, project: str) -> list[dict[str, Any]]:
+        """List distribution lists for a project.
+
+        Args:
+            project: Project slug.
+
+        Returns:
+            A list of distribution list dicts.
+
+        """
         try:
             response = self.transport.get(f"p/{project}/d/")
             self.assert_response(response)
@@ -130,6 +110,13 @@ must match {self.url_regex}"""
             raise
 
     def list_projects(self) -> list[dict[str, Any]]:
+        """List projects in the current organization.
+
+        Returns:
+            A list of project dicts, each containing ``slug``, ``name``,
+            ``applications``, ``lists``, ``channels``.
+
+        """
         try:
             response = self.transport.get("p/")
             self.assert_response(response)
@@ -139,6 +126,15 @@ must match {self.url_regex}"""
             raise
 
     def list_applications(self, project: str) -> list[dict[str, Any]]:
+        """List applications for a project.
+
+        Args:
+            project: Project slug.
+
+        Returns:
+            A list of application dicts, each containing ``slug``, ``name``.
+
+        """
         try:
             response = self.transport.get(f"p/{project}/a/")
             self.assert_response(response)
@@ -148,6 +144,17 @@ must match {self.url_regex}"""
             raise
 
     def list_members(self, project: str, distribution_list: str) -> list[dict[str, Any]]:
+        """List members of a distribution list.
+
+        Args:
+            project: Project slug.
+            distribution_list: Distribution list ID.
+
+        Returns:
+            A list of member dicts, each containing ``id``, ``address``,
+            ``user``, ``channel``.
+
+        """
         try:
             response = self.transport.get(f"p/{project}/d/{distribution_list}/m/")
             self.assert_response(response)
@@ -165,6 +172,12 @@ must match {self.url_regex}"""
         options: dict[str, str] | None = None,
         cid: str | None = None,
     ) -> dict[str, Any]:
+        """Use :meth:`set_domain` + :meth:`trigger_event` instead."""
+        warnings.warn(
+            "trigger() is deprecated, use trigger_event() with set_domain() instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         try:
             if cid:
                 cid = f"?cid={cid}"
@@ -181,6 +194,18 @@ must match {self.url_regex}"""
             raise
 
     def add_user(self, email: str, first_name: str, last_name: str, custom: "JSON | None" = None) -> "JSON":
+        """Add a new user to the current organization.
+
+        Args:
+            email: User email address.
+            first_name: User first name.
+            last_name: User last name.
+            custom: Optional dict of custom fields.
+
+        Returns:
+            The API response dict for the created user.
+
+        """
         try:
             response = self.transport.post(
                 "u/",
@@ -200,6 +225,20 @@ must match {self.url_regex}"""
         custom_fields: "JSON | None" = None,
         mode: str = JsonUpdateMode.IGNORE,
     ) -> "JSON":
+        """Update an existing user in the current organization.
+
+        Args:
+            email: User email address (used as the lookup key).
+            first_name: New first name.
+            last_name: New last name.
+            custom_fields: Optional dict of custom fields to update.
+            mode: Merge mode for custom fields
+                (see :class:`~bitcaster_sdk.helpers.JsonUpdateMode`).
+
+        Returns:
+            The API response dict for the updated user.
+
+        """
         try:
             uid = urllib.parse.quote(email)
             response = self.transport.patch(
@@ -224,6 +263,7 @@ ctx.set(Client(None))
 
 
 def init(bae: str | None = None, **kwargs: Any) -> "Client":
+    """Initialize the module-level client from a BAE or environment variable."""
     if bae is None:
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()

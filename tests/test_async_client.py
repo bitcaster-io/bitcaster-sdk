@@ -273,3 +273,35 @@ class TestSubmitErrors:
         client = AsyncClient()
         with pytest.raises(RuntimeError, match="client not initialized"):
             client.ping().result(timeout=5)
+
+
+class TestDomain:
+    def test_set_domain(self, client: AsyncClient) -> None:
+        client.set_domain("my-project", "my-app")
+        assert client.project == "my-project"
+        assert client.application == "my-app"
+
+    def test_trigger_event(self, client_setup, response_trigger) -> None:
+        rsps, client = client_setup
+        client.set_domain("bitcaster", "bitcaster")
+        future = client.trigger_event("a1", context={})
+        assert future.result(timeout=5) == {"occurrence": 15}
+
+    def test_trigger_event_no_domain(self, client: AsyncClient) -> None:
+        with pytest.raises(ConfigurationError, match="set_domain"):
+            client.trigger_event("a1")
+
+    def test_trigger_event_uses_latest_domain(self, client_setup) -> None:
+        rsps, client = client_setup
+        url = f"{client.base_url}p/other-project/a/other-app/e/ev/trigger/"
+        rsps.add(responses_lib.POST, url, json={"occurrence": 7}, status=201)
+        client.set_domain("other-project", "other-app")
+        future = client.trigger_event("ev", context={})
+        assert future.result(timeout=5) == {"occurrence": 7}
+
+    def test_trigger_deprecated(self, client_setup, response_trigger) -> None:
+        rsps, client = client_setup
+        with pytest.warns(DeprecationWarning):
+            future = client.trigger("bitcaster", "bitcaster", "a1", context={})
+            result = future.result(timeout=5)
+            assert result == {"occurrence": 15}
