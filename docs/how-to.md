@@ -34,11 +34,9 @@ bitcaster_sdk.trigger("project-slug", "application-slug", "event-slug", context=
 ### Using the `Client` directly
 
 ```python
-from bitcaster_sdk.client import Client, init
+from bitcaster_sdk.client import Client
 
-init("https://key@server/api/o/org/")
 client = Client("https://key@server/api/o/org/")
-
 client.trigger("project", "app", "event", context={"order_id": "456"})
 ```
 

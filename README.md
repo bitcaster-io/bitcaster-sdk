@@ -8,7 +8,7 @@ Bitcaster Python SDK
 
 How to use it:
 
-Setupt environemnt
+Setup environment
 
 - Set Bitcaster application-end-point using Bitcaster Key, get it at <bc_instance>/o/<org>/a/<app>/key/
 
@@ -21,13 +21,12 @@ Setupt environemnt
 
     ```
     import bitcaster_sdk
-        bitcaster_sdk.init()
-        from bitcaster_sdk import trigger
-        trigger(
-            "project-slug", "application-slug", "event-slug",
-            context={}
-        )
-
+    bitcaster_sdk.init()
+    from bitcaster_sdk import trigger
+    trigger(
+        "project-slug", "application-slug", "event-slug",
+        context={}
+    )
     ```
 
 
