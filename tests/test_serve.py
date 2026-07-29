@@ -71,6 +71,11 @@ class TestServe:
             resp = requests.post(f"http://localhost:{port}/no-body", timeout=5)
             assert resp.status_code == 200
 
+    def test_query_parameters(self) -> None:
+        with _serve() as port:
+            resp = requests.get(f"http://localhost:{port}/path?key1=val1&key2=val2", timeout=5)
+            assert resp.status_code == 200
+
     def test_custom_response_code(self) -> None:
         with _serve("--response-code", "201") as port:
             resp = requests.post(f"http://localhost:{port}/created", json={"a": 1}, timeout=5)
