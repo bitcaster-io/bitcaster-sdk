@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Tuple
 
 import pytest
+import responses as responses_lib
 
 from bitcaster_sdk.exceptions import ConfigurationError
+from bitcaster_sdk.transport import Transport
 
 if TYPE_CHECKING:
     from _pytest.monkeypatch import MonkeyPatch
@@ -55,3 +57,93 @@ def test_list_events(client_setup: Tuple[RequestsMock, Client], response_events:
 def test_client_parse_url(client: "Client") -> None:
     with pytest.raises(ConfigurationError):
         client.parse_url("")
+
+
+def test_list_users(client_setup: Tuple[RequestsMock, Client], response_users: str) -> None:
+    responses, client = client_setup
+    res = client.list_users()
+    assert len(res) == 3
+
+    responses.add(responses.GET, f"{client.base_url}u/", body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.list_users()
+
+
+def test_list_projects(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/"
+    responses.add(responses.GET, url, json=[{"slug": "proj1"}])
+    res = client.list_projects()
+    assert res == [{"slug": "proj1"}]
+
+    responses.add(responses.GET, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.list_projects()
+
+
+def test_list_applications(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myapp/a/"
+    responses.add(responses.GET, url, json=[{"slug": "app1"}])
+    res = client.list_applications("myapp")
+    assert res == [{"slug": "app1"}]
+
+    responses.add(responses.GET, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.list_applications("myapp")
+
+
+def test_list_distribution_lists(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/d/"
+    responses.add(responses.GET, url, json=[{"name": "Dis1"}])
+    res = client.list_distribution_lists("myproject")
+    assert res == [{"name": "Dis1"}]
+
+    responses.add(responses.GET, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.list_distribution_lists("myproject")
+
+
+def test_list_members(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/d/1/m/"
+    responses.add(responses.GET, url, json=[{"id": 1}])
+    res = client.list_members("myproject", "1")
+    assert res == [{"id": 1}]
+
+    responses.add(responses.GET, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.list_members("myproject", "1")
+
+
+def test_add_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}u/"
+    responses.add(responses.POST, url, json={"email": "new@b.com"}, status=201)
+    res = client.add_user("new@b.com", "First", "Last")
+    assert res == {"email": "new@b.com"}
+
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.add_user("new@b.com", "First", "Last")
+
+
+def test_update_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}u/new%40b.com/"
+    responses.add(responses.PATCH, url, json={"email": "new@b.com", "first_name": "Updated"})
+    res = client.update_user("new@b.com", "Updated", "")
+    assert res["first_name"] == "Updated"
+
+    responses.add(responses.PATCH, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.update_user("new@b.com", "Updated", "")
+
+
+def test_transport_put() -> None:
+    transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11")
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/", json={"ok": True})
+        resp = transport.put("u/", {"email": "a@b.com"})
+        assert resp.json() == {"ok": True}

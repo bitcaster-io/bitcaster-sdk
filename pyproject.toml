@@ -9,28 +9,40 @@ requires = [
 name = "bitcaster-sdk"
 description = "Bitcaster Python SDK"
 readme = "README.md"
-
 license = { text = "MIT" }
-
+maintainers = [
+  { name = "sax", email = "s.apostolico@gmail.com" },
+  { name = "mark", email = "hanarero@gmail.com" },
+]
+authors = [
+  { name = "sax", email = "s.apostolico@gmail.com" },
+  { name = "mark", email = "hanarero@gmail.com" },
+]
+requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
 dynamic = [ "version" ]
-
 dependencies = [
-  "click>=8.4.2",
+  "click",
+  "humanfriendly",
+  "requests",
 ]
 
-urls.Homepage = "https://github.com/bitcaster-io/bitcaster-sdk"
-urls.Repository = "https://github.com/bitcaster-io/bitcaster-sdk"
+[project.urls]
+Homepage = "https://github.com/bitcaster-io/bitcaster-sdk"
+Repository = "https://github.com/bitcaster-io/bitcaster-sdk"
+
+scripts.bitcaster = "bitcaster_sdk:__cli__.cli"
 
 [dependency-groups]
 dev = [
+  "diff-cover>=10.4",
   "pre-commit",
   "pytest",
   "pytest-coverage",
@@ -40,7 +52,16 @@ dev = [
   "ruff",
   "tox",
 ]
-
+docs = [
+  "mkdocs>=1.5.3",
+  "mkdocs-awesome-pages-plugin>=2.9.3",
+  "mkdocs-include-markdown-plugin>=6.2.2",
+  "mkdocs-macros-plugin>=1.0.5",
+  "mkdocs-material>=9.5.15",
+  "mkdocs-redirects>=1.2.1",
+  "mkdocstrings[python]>=0.24.1",
+  "pymdown-extensions>=10.7.1",
+]
 typing = [
   "mypy>=1.9",
   "types-requests>=2.32.0.20240712",
@@ -48,20 +69,16 @@ typing = [
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/bitcaster_sdk/version.py"
-version.source = "vcs"
-raw-options = { root = "../.." }
-
-[tool.hatch.build.targets.sdist]
-ignore-vcs = true
-include = [
+build.targets.sdist.ignore-vcs = true
+build.targets.sdist.include = [
   "src/bitcaster_sdk/**/*.*",
 ]
-exclude = [
+build.targets.sdist.exclude = [
   "src/bitcaster_sdk/**/~*.*",
 ]
-
-[tool.hatch.build.targets.wheel]
-packages = [ "src/bitcaster_sdk" ]
+build.targets.wheel.packages = [ "src/bitcaster_sdk" ]
+version.source = "vcs"
+raw-options = { root = "../.." }
 
 [tool.check-manifest]
 ignore = """
