@@ -13,7 +13,7 @@ It provides a simple, Pythonic interface to interact with the Bitcaster REST API
 - Simple REST client for the Bitcaster API
 - Django integration helpers
 - CLI interface via `bitcaster` command
-- Support for Python 3.8+
+- Support for Python 3.10+
 
 ## Quick Start
 
@@ -26,14 +26,18 @@ pip install bitcaster-sdk
 Trigger an event:
 
 ```python
-from bitcaster_sdk import BitcasterClient
+from bitcaster_sdk.client import Client
 
-client = BitcasterClient(
-    server="https://your-bitcaster-server",
-    token="your-api-token",
-)
+client = Client("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/")
+client.set_domain("my-project", "my-app")
+client.trigger_event("my-event", context={"message": "Hello from the SDK!"})
+```
 
-client.trigger("my-event", payload={"message": "Hello from the SDK!"})
+You can also pass `project` and `application` at construction time:
+
+```python
+client = Client("https://<API_KEY>@<SERVER>/api/o/<org>/", project="my-project", application="my-app")
+client.trigger_event("my-event", context={"message": "Hello from the SDK!"})
 ```
 
 ## More Information

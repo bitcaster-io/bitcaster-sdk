@@ -6,6 +6,9 @@ title: Async Client
 
 The `AsyncClient` provides a non-blocking interface to the Bitcaster API. Every API method returns a [`concurrent.futures.Future`][], allowing your application to continue executing while the request is processed in a background thread.
 
+For shared constructor arguments, properties, and inherited methods see the
+[Sync Client](client.md) reference.
+
 ## Quick Start
 
 ```python
@@ -108,7 +111,8 @@ client.close()
         - list_applications
         - list_distribution_lists
         - list_members
-        - trigger
+        - set_domain
+        - trigger_event
         - add_user
         - update_user
         - flush
@@ -120,7 +124,8 @@ client.close()
 
 ```python
 client = AsyncClient("https://key@app.bitcaster.io/api/o/ORG/")
-future = client.trigger("my-project", "my-app", "order-placed", context={"order_id": "123"})
+client.set_domain("my-project", "my-app")
+future = client.trigger_event("order-placed", context={"order_id": "123"})
 
 # Do other work while the request is in-flight
 process_local_task()

@@ -147,3 +147,34 @@ def test_transport_put() -> None:
         rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/", json={"ok": True})
         resp = transport.put("u/", {"email": "a@b.com"})
         assert resp.json() == {"ok": True}
+
+
+class TestDomain:
+    def test_set_domain(self, client: Client) -> None:
+        client.set_domain("my-project", "my-app")
+        assert client.project == "my-project"
+        assert client.application == "my-app"
+
+    def test_trigger_event(self, client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
+        responses, client = client_setup
+        client.set_domain("bitcaster", "bitcaster")
+        res = client.trigger_event("a1", context={})
+        assert res == {"occurrence": 15}
+
+    def test_trigger_event_no_domain(self, client: Client) -> None:
+        with pytest.raises(ConfigurationError, match="set_domain"):
+            client.trigger_event("a1")
+
+    def test_trigger_event_uses_latest_domain(self, client_setup: Tuple[RequestsMock, Client]) -> None:
+        responses, client = client_setup
+        url = f"{client.base_url}p/other-project/a/other-app/e/ev/trigger/"
+        responses.add(responses_lib.POST, url, json={"occurrence": 7}, status=201)
+        client.set_domain("other-project", "other-app")
+        res = client.trigger_event("ev", context={})
+        assert res == {"occurrence": 7}
+
+    def test_trigger_deprecated(self, client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
+        responses, client = client_setup
+        with pytest.warns(DeprecationWarning):
+            res = client.trigger("bitcaster", "bitcaster", "a1", context={})
+            assert res == {"occurrence": 15}

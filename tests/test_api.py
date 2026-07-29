@@ -16,7 +16,15 @@ if TYPE_CHECKING:
 def test_trigger(client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
     import bitcaster_sdk
 
-    bitcaster_sdk.trigger("bitcaster", "bitcaster", "a1")
+    with pytest.warns(DeprecationWarning):
+        bitcaster_sdk.trigger("bitcaster", "bitcaster", "a1")
+
+
+def test_trigger_event(client_setup: Tuple[RequestsMock, Client], response_trigger: str) -> None:
+    import bitcaster_sdk
+
+    bitcaster_sdk.set_domain("bitcaster", "bitcaster")
+    bitcaster_sdk.trigger_event("a1")
 
 
 def test_list_projects(client_setup: Tuple[RequestsMock, Client]) -> None:
