@@ -50,7 +50,6 @@ dev = [
   "tox",
 ]
 docs = [
-  "properdocs",
   "cairosvg>=2.9",
   "markupsafe>=2.1.5",
   "mdx-gh-links>=0.4",
@@ -70,6 +69,7 @@ docs = [
   "mkdocs-redirects>=1.2.1",
   "mkdocs-simple-hooks>=0.1.5",
   "mkdocstrings[python]>=0.24.1",
+  "properdocs",
   "pymdown-extensions>=10.21.3",
 ]
 typing = [
