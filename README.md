@@ -1,53 +1,79 @@
-Bitcaster Python SDK
---------------------
+# Bitcaster Python SDK
 
 [![Test](https://github.com/bitcaster-io/bitcaster-sdk/actions/workflows/test.yml/badge.svg)](https://github.com/bitcaster-io/bitcaster-sdk/actions/workflows/test.yml)
 [![codecov](https://codecov.io/github/bitcaster-io/bitcaster-sdk/graph/badge.svg?token=gZTNDaXB57)](https://codecov.io/github/bitcaster-io/bitcaster-sdk)
 [![Pypi](https://badge.fury.io/py/bitcaster-sdk.svg)](https://badge.fury.io/py/bitcaster-sdk)
 
+Python client for the [Bitcaster](https://bitcaster.io) event notification platform.
 
-How to use it:
+## Quick start
 
-Setup environment
+Set your Bitcaster API endpoint:
 
-- Set Bitcaster application-end-point using Bitcaster Key, get it at <bc_instance>/o/<org>/a/<app>/key/
+```
+export BITCASTER_BAE=https://<API_KEY>@<SERVER>/api/o/<organization_slug>/
+```
 
-    ```
-    export BITCASTER_BAE=http://<KEY>@<SERVER>/api/o/<organization_slug>/
+### Sync client
 
-    ```
+```python
+from bitcaster_sdk import Client
 
-- in your code
+client = Client("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/")
+client.set_domain("my-project", "my-app")
 
-    ```
-    import bitcaster_sdk
-    bitcaster_sdk.init()
-    from bitcaster_sdk import trigger
-    trigger(
-        "project-slug", "application-slug", "event-slug",
-        context={}
-    )
-    ```
+result = client.trigger_event("order.created", context={"id": "abc-123"})
+print(result)
 
+users = client.list_users()
+events = client.list_events("my-project", "my-app")
+projects = client.list_projects()
+```
 
+### Async client (non-blocking)
 
-- from command line
+```python
+from bitcaster_sdk import AsyncClient
 
-    ```
-    $ bitcaster
-    Usage: bitcaster [OPTIONS] COMMAND [ARGS]...
+with AsyncClient("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/") as client:
+    client.set_domain("my-project", "my-app")
+    future = client.trigger_event("order.created", context={"id": "abc-123"})
+    result = future.result(timeout=10)
+    print(result)
+```
 
-    Options:
-      --bae BAE  Bitcaster BAE. Not needed if $BITCASTER_BAE is set
-      --debug
-      --help     Show this message and exit.
+The async client runs HTTP requests on a background thread. The context manager ensures clean shutdown.
 
-    Commands:
-      events   lists Application's Events
-      lists    lists Project's DistributionList
-      members  lists DistributionList Members
-      ping     ping Bitcaster server
-      trigger  trigger Application's Event
-      users    displays Organization's Users
+### Module-level API (quick scripts)
 
-    ```
+```python
+import bitcaster_sdk
+
+bitcaster_sdk.init()  # reads BITCASTER_BAE env var
+bitcaster_sdk.set_domain("my-project", "my-app")
+
+result = bitcaster_sdk.trigger_event("order.created")
+users = bitcaster_sdk.list_users()
+```
+
+## CLI
+
+```bash
+# Check connectivity
+bitcaster ping
+
+# Trigger an event
+bitcaster trigger --project my-project --application my-app event-slug \
+  --context order_id abc-123
+
+# List resources
+bitcaster projects
+bitcaster applications --project my-project
+bitcaster events --project my-project --application my-app
+bitcaster users list
+
+# Start a fake dev server
+bitcaster serve --port 9000
+```
+
+See the [CLI reference](docs/cli.md) for full documentation.
