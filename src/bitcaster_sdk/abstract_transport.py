@@ -16,6 +16,7 @@ class AbstractTransport(ABC):
         self.session = requests.Session()
         self.base_url = base_url
         self.debug = kwargs.get("debug")
+        self.timeout: float | tuple[float, float] | None = kwargs.get("timeout")
         self.session.headers.update({"Authorization": f"Key {token}", "User-Agent": "Bitcaster-SDK"})
         self.conn = urlparse(base_url)
         self.last_url = ""

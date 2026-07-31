@@ -44,6 +44,7 @@ class AbstractClient(ABC):
         debug: bool = False,
         project: str | None = None,
         application: str | None = None,
+        timeout: float | tuple[float, float] | None = None,
     ) -> None:
         """Initialize the client.
 
@@ -54,6 +55,9 @@ class AbstractClient(ABC):
             debug: Enable debug logging.
             project: Default project slug for :meth:`trigger_event`.
             application: Default application slug for :meth:`trigger_event`.
+            timeout: Maximum seconds for each HTTP request. A ``(connect, read)``
+                tuple may be used to configure the phases separately. The
+                default of ``None`` preserves Requests' unbounded behavior.
 
         """
         self.options: dict[str, Any] = {}
@@ -62,7 +66,8 @@ class AbstractClient(ABC):
         self.application: str | None = application
         if bae is not None:
             self.bae = bae
-            self.options = {"debug": debug, "shutdown_timeout": 10}
+            # Request timeout bounds HTTP calls; shutdown timeout bounds async queue draining.
+            self.options = {"debug": debug, "shutdown_timeout": 10, "timeout": timeout}
             self.parse_url(bae)
             self.transport = self._transport_class(**self.options)
 

@@ -33,6 +33,14 @@ class TestInit:
     def test_last_url_default(self, transport: _ConcreteTransport) -> None:
         assert transport.last_url == ""
 
+    def test_default_timeout(self, transport: _ConcreteTransport) -> None:
+        assert transport.timeout is None
+
+    def test_configured_timeout(self) -> None:
+        transport = _ConcreteTransport("http://app.bitcaster.io/api/o/os4d/", "key-11", timeout=(3, 7))
+
+        assert transport.timeout == (3, 7)
+
 
 class TestGetUrl:
     def test_relative_path(self, transport: _ConcreteTransport) -> None:

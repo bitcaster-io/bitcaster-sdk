@@ -23,7 +23,7 @@ class AsyncTransport(AbstractTransport):
             logger.info("get %s", url)
 
         def _call() -> requests.Response:
-            return self.session.get(url)
+            return self.session.get(url, timeout=self.timeout)
 
         return self._worker.submit(_call)
 
@@ -34,7 +34,7 @@ class AsyncTransport(AbstractTransport):
 
         def _call() -> requests.Response:
             with self.with_headers({"Content-Type": "application/json"}):
-                return self.session.post(url, json=arguments)
+                return self.session.post(url, json=arguments, timeout=self.timeout)
 
         return self._worker.submit(_call)
 
@@ -45,7 +45,7 @@ class AsyncTransport(AbstractTransport):
 
         def _call() -> requests.Response:
             with self.with_headers({"Content-Type": "application/json"}):
-                return self.session.patch(url, json=arguments)
+                return self.session.patch(url, json=arguments, timeout=self.timeout)
 
         return self._worker.submit(_call)
 
@@ -56,7 +56,7 @@ class AsyncTransport(AbstractTransport):
 
         def _call() -> requests.Response:
             with self.with_headers({"Content-Type": "application/json"}):
-                return self.session.put(url, json=arguments)
+                return self.session.put(url, json=arguments, timeout=self.timeout)
 
         return self._worker.submit(_call)
 
