@@ -267,6 +267,38 @@ def trigger(
         raise click.ClickException(str(e)) from None
 
 
+@cli.command(name="unregister", help="remove a User from a Project's or Application's DistributionLists")
+@click.argument("username")
+@click.option(
+    "--project", "-p", required=True, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster Project"
+)
+@click.option(
+    "--application",
+    "-a",
+    required=False,
+    metavar="APPLICATION",
+    help="only remove from DistributionLists pinned to this Application; omit to remove from every list in the Project",
+)
+@json_output_option
+@click.pass_context
+def unregister(ctx: Context, project: str, application: str | None, username: str, json_output: bool = False) -> None:
+    ctx.obj["json"] = ctx.obj.get("json", False) or json_output
+    try:
+        ret = bitcaster_sdk.unregister_user(project, username, application)
+        if ctx.obj["json"]:
+            echo(json.dumps(ret, indent=2))
+            return
+        if ctx.obj["debug"]:
+            secho(client.ctx.get().last_called_url)
+        secho(f"Removed {ret['deleted']} membership(s) for '{username}'", fg="green")
+    except AuthenticationError:
+        raise click.Abort("AuthenticationError") from None
+    except EventNotFoundError:
+        raise click.Abort("Project, Application or User not found") from None
+    except Exception as e:
+        raise click.ClickException(str(e)) from None
+
+
 from . import users  # noqa
 
 

@@ -197,6 +197,24 @@ class TestAddUpdateUser:
         assert result["first_name"] == "Updated"
 
 
+class TestUnregisterUser:
+    def test_unregister_user_from_application(self, client_setup) -> None:
+        rsps, client = client_setup
+        url = f"{client.base_url}p/myproject/a/myapp/unregister/user%40b.com/"
+        rsps.add(responses_lib.POST, url, json={"deleted": 3})
+        future = client.unregister_user("myproject", "user@b.com", application="myapp")
+        result = future.result(timeout=5)
+        assert result == {"deleted": 3}
+
+    def test_unregister_user_from_project(self, client_setup) -> None:
+        rsps, client = client_setup
+        url = f"{client.base_url}p/myproject/unregister/user%40b.com/"
+        rsps.add(responses_lib.POST, url, json={"deleted": 5})
+        future = client.unregister_user("myproject", "user@b.com")
+        result = future.result(timeout=5)
+        assert result == {"deleted": 5}
+
+
 class TestInit:
     def test_valid_url(self, bae: str) -> None:
         client = AsyncClient(bae)

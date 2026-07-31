@@ -19,6 +19,7 @@ __all__ = [
     "list_events",
     "list_users",
     "list_distribution_lists",
+    "unregister_user",
     "VERSION",
 ]
 
@@ -78,3 +79,7 @@ def list_projects() -> list[dict[str, Any]]:
 
 def list_applications(project: str) -> list[dict[str, Any]]:
     return client.ctx.get().list_applications(project)
+
+
+def unregister_user(project: str, username: str, application: str | None = None) -> dict[str, Any]:
+    return client.ctx.get().unregister_user(project, username, application)

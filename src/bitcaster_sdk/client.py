@@ -217,6 +217,37 @@ class Client(AbstractClient):
             logger.exception(e)
             raise
 
+    def unregister_user(self, project: str, username: str, application: str | None = None) -> "JSON":
+        """Remove a user from a project's or application's distribution lists.
+
+        With ``application``, removes the user from all distribution lists
+        pinned to that application; requires the ``MANAGE_APPLICATION_USERS``
+        grant. Without it, removes the user from *every* distribution list in
+        the project (pinned or not); requires the ``MANAGE_PROJECT_USERS``
+        grant and an API key scoped at project level or above.
+
+        Args:
+            project: Project slug.
+            username: Username (or email) of the user to unregister.
+            application: Optional application slug to restrict the removal to.
+
+        Returns:
+            A dict with the number of removed memberships, e.g. ``{"deleted": 3}``.
+
+        """
+        try:
+            uid = urllib.parse.quote(username)
+            if application:
+                path = f"p/{project}/a/{application}/unregister/{uid}/"
+            else:
+                path = f"p/{project}/unregister/{uid}/"
+            response = self.transport.post(path, {})
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
     def update_user(
         self,
         email: str,
