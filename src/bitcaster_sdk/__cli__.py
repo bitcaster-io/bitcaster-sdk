@@ -267,7 +267,7 @@ def trigger(
         raise click.ClickException(str(e)) from None
 
 
-@cli.command(name="unregister", help="remove a User from all DistributionLists pinned to an Application")
+@cli.command(name="unregister", help="remove a User from a Project's or Application's DistributionLists")
 @click.argument("username")
 @click.option(
     "--project", "-p", required=True, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster Project"
@@ -275,17 +275,16 @@ def trigger(
 @click.option(
     "--application",
     "-a",
-    required=True,
-    envvar="BITCASTER_APPLICATION",
+    required=False,
     metavar="APPLICATION",
-    help="Bitcaster Application",
+    help="only remove from DistributionLists pinned to this Application; omit to remove from every list in the Project",
 )
 @json_output_option
 @click.pass_context
-def unregister(ctx: Context, project: str, application: str, username: str, json_output: bool = False) -> None:
+def unregister(ctx: Context, project: str, application: str | None, username: str, json_output: bool = False) -> None:
     ctx.obj["json"] = ctx.obj.get("json", False) or json_output
     try:
-        ret = bitcaster_sdk.unregister_user(project, application, username)
+        ret = bitcaster_sdk.unregister_user(project, username, application)
         if ctx.obj["json"]:
             echo(json.dumps(ret, indent=2))
             return

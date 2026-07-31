@@ -81,5 +81,5 @@ def list_applications(project: str) -> list[dict[str, Any]]:
     return client.ctx.get().list_applications(project)
 
 
-def unregister_user(project: str, application: str, username: str) -> dict[str, Any]:
-    return client.ctx.get().unregister_user(project, application, username)
+def unregister_user(project: str, username: str, application: str | None = None) -> dict[str, Any]:
+    return client.ctx.get().unregister_user(project, username, application)

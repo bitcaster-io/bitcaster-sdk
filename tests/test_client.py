@@ -141,16 +141,28 @@ def test_update_user(client_setup: Tuple[RequestsMock, Client]) -> None:
         client.update_user("new@b.com", "Updated", "")
 
 
-def test_unregister_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+def test_unregister_user_from_application(client_setup: Tuple[RequestsMock, Client]) -> None:
     responses, client = client_setup
     url = f"{client.base_url}p/myproject/a/myapp/unregister/user%40b.com/"
     responses.add(responses.POST, url, json={"deleted": 3})
-    res = client.unregister_user("myproject", "myapp", "user@b.com")
+    res = client.unregister_user("myproject", "user@b.com", application="myapp")
     assert res == {"deleted": 3}
 
     responses.add(responses.POST, url, body=Exception(""))
     with pytest.raises(Exception, match=".*"):
-        client.unregister_user("myproject", "myapp", "user@b.com")
+        client.unregister_user("myproject", "user@b.com", application="myapp")
+
+
+def test_unregister_user_from_project(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/unregister/user%40b.com/"
+    responses.add(responses.POST, url, json={"deleted": 5})
+    res = client.unregister_user("myproject", "user@b.com")
+    assert res == {"deleted": 5}
+
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.unregister_user("myproject", "user@b.com")
 
 
 def test_transport_put() -> None:
