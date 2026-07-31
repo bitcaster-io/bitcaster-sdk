@@ -35,6 +35,7 @@ result = client.trigger_event("order-placed", context={"order_id": "123"})
         - trigger_event
         - add_user
         - update_user
+        - unregister_user
         - base_url
         - api_url
         - last_called_url

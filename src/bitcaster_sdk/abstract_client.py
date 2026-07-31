@@ -194,6 +194,9 @@ must match {self.url_regex}"""
     def add_user(self, email: str, first_name: str, last_name: str, custom: JSON | None = None) -> Any: ...
 
     @abstractmethod
+    def unregister_user(self, project: str, application: str, username: str) -> Any: ...
+
+    @abstractmethod
     def update_user(
         self,
         email: str,

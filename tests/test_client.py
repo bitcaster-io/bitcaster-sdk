@@ -141,6 +141,18 @@ def test_update_user(client_setup: Tuple[RequestsMock, Client]) -> None:
         client.update_user("new@b.com", "Updated", "")
 
 
+def test_unregister_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/unregister/user%40b.com/"
+    responses.add(responses.POST, url, json={"deleted": 3})
+    res = client.unregister_user("myproject", "myapp", "user@b.com")
+    assert res == {"deleted": 3}
+
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.unregister_user("myproject", "myapp", "user@b.com")
+
+
 def test_transport_put() -> None:
     transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11")
     with responses_lib.RequestsMock() as rsps:

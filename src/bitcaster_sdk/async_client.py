@@ -238,6 +238,28 @@ class AsyncClient(AbstractClient):
 
         return self._submit(_call)
 
+    def unregister_user(self, project: str, application: str, username: str) -> Future[JSON]:
+        """Remove a user from all distribution lists pinned to an application (async).
+
+        Returns:
+            A Future that resolves to a dict with the number of removed
+            memberships, e.g. ``{"deleted": 3}``.
+
+        """
+        uid = urllib.parse.quote(username)
+
+        def _call() -> JSON:
+            if self.transport is None:
+                raise RuntimeError("client not initialized")
+            url = self.transport.get_url(f"p/{project}/a/{application}/unregister/{uid}/")
+            self.transport.last_url = url
+            with self.transport.with_headers({"Content-Type": "application/json"}):
+                response = self.transport.session.post(url, json={})
+            self.assert_response(response)
+            return response.json()
+
+        return self._submit(_call)
+
     def update_user(
         self,
         email: str,

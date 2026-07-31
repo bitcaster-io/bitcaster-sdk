@@ -126,6 +126,26 @@ def test_users_update(client_setup: Tuple[RequestsMock, Client]):
     assert result.exit_code == 0
 
 
+def test_unregister(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/unregister/user%40example.com/"
+    responses.add(responses.POST, url, json={"deleted": 2})
+    runner = CliRunner()
+    result = runner.invoke(cli, ["unregister", "user@example.com", "-p", "bitcaster", "-a", "bitcaster"])
+    assert result.exit_code == 0
+    assert "Removed 2 membership(s)" in result.output
+
+
+def test_unregister_json(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/unregister/user%40example.com/"
+    responses.add(responses.POST, url, json={"deleted": 2})
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--json", "unregister", "user@example.com", "-p", "bitcaster", "-a", "bitcaster"])
+    assert result.exit_code == 0
+    assert json.loads(result.output) == {"deleted": 2}
+
+
 class TestJsonOutput:
     def test_ping_json(self, client_setup: Tuple[RequestsMock, Client], response_ping: str) -> None:
         runner = CliRunner()
