@@ -182,25 +182,7 @@ with AsyncClient("https://key@server/api/o/org/") as client:
     print(result)
 ```
 
-## CLI
-
-The SDK ships with a `bitcaster` command for quick operations:
-
-```bash
-# Ping the server
-bitcaster ping
-
-# List all users
-bitcaster users list
-
-# Trigger an event
-bitcaster trigger project-slug application-slug event-slug
-
-# Show help
-bitcaster --help
-```
-
-Set the endpoint via `--bae` or the `BITCASTER_BAE` environment variable.
+For CLI usage reference, see the [CLI Reference](cli.md).
 
 ## Django integration
 

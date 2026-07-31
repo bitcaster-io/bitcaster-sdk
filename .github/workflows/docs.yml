@@ -35,7 +35,7 @@ jobs:
       - name: Build Doc
         run: |
           uv sync --group docs
-          PYTHONPATH=./src uv run --cache-dir .cache-uv/ mkdocs build -d ./docs-output
+          PYTHONPATH=./src uv run --cache-dir .cache-uv/ properdocs build -d ./docs-output
 
       - name: Cache venv
         if: steps.cache-venv-restore.outputs.cache-hit != 'true'
