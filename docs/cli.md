@@ -188,3 +188,28 @@ bitcaster serve --port 9000 --response-code 201 --response-body '{"id": "abc"}'
 | `BITCASTER_PROJECT` | `--project` / `-p` on `events`, `trigger`, `lists`, `members` |
 | `BITCASTER_APPLICATION` | `--application` / `-a` on `events`, `trigger` |
 | `BITCASTER_DEBUG` | `--debug` |
+
+### RabbitMQ (AMQP) BAE
+
+When `BITCASTER_BAE` starts with `amqp://` the CLI uses a RabbitMQ
+client instead of the HTTP API. Only the `trigger` and `ping` commands
+are available; listing commands raise an error.
+
+Additional environment variables for the AMQP transport:
+
+| Variable | Default | Used by |
+|---|---|---|
+| `BITCASTER_QUEUE` | `bitcaster` | Queue name to publish to |
+| `BITCASTER_EXCHANGE` | `""` | Exchange name (optional) |
+| `BITCASTER_ROUTING_KEY` | `""` | Routing key when binding the queue |
+| `BITCASTER_EVENT_FIELD` | `event` | JSON field that holds the event slug |
+
+Example:
+
+```bash
+export BITCASTER_BAE=amqp://user:password@localhost:5672/
+export BITCASTER_PROJECT=my-project
+export BITCASTER_APPLICATION=my-app
+export BITCASTER_QUEUE=my-events
+bitcaster trigger order-placed --context order_id 456
+```

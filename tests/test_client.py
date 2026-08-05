@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import sys
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Tuple
+from urllib.parse import urlparse
 
 import pytest
 import responses as responses_lib
@@ -229,3 +232,71 @@ class TestDomain:
         with pytest.warns(DeprecationWarning):
             res = client.trigger("bitcaster", "bitcaster", "a1", context={})
             assert res == {"occurrence": 15}
+
+
+class _FakeParams:
+    def __init__(self, url: str) -> None:
+        p = urlparse(url)
+        self.host = p.hostname or "localhost"
+        self.port = p.port or 5672
+        self.virtual_host = p.path.strip("/") or "/"
+        self.username = p.username or ""
+        self.password = p.password or ""
+        self.original = url
+
+    def __str__(self) -> str:
+        return self.original
+
+
+class _FakeChan:
+    published: list[tuple[str, str, str, object]] = []
+
+    def queue_declare(self, queue: str, durable: bool = False, **kwargs: object) -> object:
+        return SimpleNamespace()
+
+    def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
+        pass
+
+    def basic_publish(self, exchange: str, routing_key: str, body: str, properties: object | None = None) -> None:
+        self.published.append((exchange, routing_key, body, properties))
+
+
+class _FakeConn:
+    def __init__(self, pika: object, params: _FakeParams) -> None:
+        self.params = params
+        self.closed = False
+
+    def channel(self) -> _FakeChan:
+        return _FakeChan()
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class _FakePika:
+    def URLParameters(self, url: str) -> _FakeParams:  # noqa: N802
+        return _FakeParams(url)
+
+    def BlockingConnection(self, params: _FakeParams) -> _FakeConn:  # noqa: N802
+        return _FakeConn(self, params)
+
+    def BasicProperties(self, delivery_mode: int = 1) -> SimpleNamespace:  # noqa: N802
+        return SimpleNamespace(delivery_mode=delivery_mode)
+
+
+def test_init_with_amqp_bae(monkeypatch: pytest.MonkeyPatch) -> None:
+    """init() creates RabbitClient when BAE starts with amqp://."""
+    monkeypatch.setitem(sys.modules, "pika", _FakePika())
+    from bitcaster_sdk import init
+
+    client = init("amqp://user:pass@localhost:5672/", project="p1", application="a1")
+    assert client.__class__.__name__ == "RabbitClient"
+    assert client.project == "p1"
+    assert client.application == "a1"
+    assert client.queue == "bitcaster"
+
+    # verify module-level convenience functions work
+    from bitcaster_sdk import trigger_event, set_domain
+
+    set_domain("p1", "a1")
+    trigger_event("ev", context={"k": "v"})

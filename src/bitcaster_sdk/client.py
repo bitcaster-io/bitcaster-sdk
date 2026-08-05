@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
     from .types import JSON
 
-ctx: ContextVar["Client"] = ContextVar("bitcaster_client")
+ctx: ContextVar[Any] = ContextVar("bitcaster_client")
 
 
 class Client(AbstractClient):
@@ -262,13 +262,44 @@ class Client(AbstractClient):
 ctx.set(Client(None))
 
 
-def init(bae: str | None = None, **kwargs: Any) -> "Client":
-    """Initialize the module-level client from a BAE or environment variable."""
+def init(bae: str | None = None, **kwargs: Any) -> Any:
+    """Initialize the module-level client from a BAE or environment variable.
+
+    If the BAE starts with ``amqp://`` a :class:`~bitcaster_sdk.rabbit_client.RabbitClient`
+    is created instead, publishing events to the RabbitMQ queue. The queue,
+    exchange, routing key and event field can be configured via environment
+    variables: ``BITCASTER_QUEUE``, ``BITCASTER_EXCHANGE``,
+    ``BITCASTER_ROUTING_KEY``, ``BITCASTER_EVENT_FIELD``.
+    """
     if bae is None:
         bae = os.environ.get("BITCASTER_BAE", "")
     bae = bae.strip()
     if not bae:
         raise ConfigurationError("Set BITCASTER_BAE environment variable")
+
+    if bae.startswith("amqp://"):
+        from bitcaster_sdk.rabbit_client import RabbitClient  # noqa: PLC0415
+
+        queue = kwargs.pop("queue", None) or os.environ.get("BITCASTER_QUEUE", "bitcaster")
+        exchange = kwargs.pop("exchange", None) or os.environ.get("BITCASTER_EXCHANGE", "")
+        routing_key = kwargs.pop("routing_key", None) or os.environ.get("BITCASTER_ROUTING_KEY", "")
+        event_field = kwargs.pop("event_field", None) or os.environ.get("BITCASTER_EVENT_FIELD", "event")
+        project = kwargs.pop("project", None)
+        application = kwargs.pop("application", None)
+        debug = kwargs.pop("debug", False)
+
+        client: RabbitClient = RabbitClient(
+            bae,
+            queue=queue,
+            exchange=exchange,
+            routing_key=routing_key,
+            event_field=event_field,
+            project=project,
+            application=application,
+            debug=debug,
+        )
+        ctx.set(client)
+        return client
 
     ctx.set(Client(bae, **kwargs))
     return ctx.get()

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, List, Tuple
+import sys
+from types import SimpleNamespace
+from typing import TYPE_CHECKING, Any, List, Tuple
+from urllib.parse import urlparse
 
 import pytest
 from click.testing import CliRunner
@@ -254,3 +257,99 @@ class TestFormattedOutput:
         result = runner.invoke(cli, ["applications", "-p", "myapp"])
         assert result.exit_code == 0
         assert "app1" in result.output
+
+
+class FakeParameters:
+    def __init__(self, url: str) -> None:
+        p = urlparse(url)
+        self.host = p.hostname or "localhost"
+        self.port = p.port or 5672
+        self.virtual_host = p.path.strip("/") or "/"
+        self.username = p.username or ""
+        self.password = p.password or ""
+        self.original = url
+
+    def __str__(self) -> str:
+        return self.original
+
+
+class FakeChannel:
+    def __init__(self) -> None:
+        self.published: list[tuple[str, str, str, Any]] = []
+
+    def queue_declare(self, queue: str, durable: bool = False, **kwargs: object) -> object:
+        return SimpleNamespace()
+
+    def queue_bind(self, queue: str, exchange: str, routing_key: str) -> None:
+        pass
+
+    def basic_publish(self, exchange: str, routing_key: str, body: str, properties: object | None = None) -> None:
+        self.published.append((exchange, routing_key, body, properties))
+
+
+class FakeConnection:
+    def __init__(self, pika: "FakePika", params: FakeParameters) -> None:
+        self.pika = pika
+        self.params = params
+        self.closed = False
+
+    def channel(self) -> FakeChannel:
+        channel = FakeChannel()
+        self.pika.channels.append(channel)
+        return channel
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class FakePika:
+    def __init__(self) -> None:
+        self.channels: list[FakeChannel] = []
+
+    def URLParameters(self, url: str) -> FakeParameters:  # noqa: N802
+        return FakeParameters(url)
+
+    def BlockingConnection(self, params: FakeParameters) -> FakeConnection:  # noqa: N802
+        return FakeConnection(self, params)
+
+    def BasicProperties(self, delivery_mode: int = 1) -> SimpleNamespace:  # noqa: N802
+        return SimpleNamespace(delivery_mode=delivery_mode)
+
+
+@pytest.fixture
+def fake_pika(monkeypatch: pytest.MonkeyPatch) -> FakePika:
+    fake = FakePika()
+    monkeypatch.setitem(sys.modules, "pika", fake)
+    return fake
+
+
+def test_amqp_trigger(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CLI trigger with an amqp:// BAE uses RabbitClient."""
+    monkeypatch.setenv("BITCASTER_BAE", "amqp://user:pass@localhost:5672/")
+    monkeypatch.setenv("BITCASTER_PROJECT", "bitcaster")
+    monkeypatch.setenv("BITCASTER_APPLICATION", "bitcaster")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["trigger", "a1", "-c", "foo", "bar"])
+    assert result.exit_code == 0
+
+    channel = fake_pika.channels[-1]
+    _exchange, _routing_key, body, _properties = channel.published[-1]
+    assert json.loads(body) == {"event": "a1", "data": {"foo": "bar"}}
+
+
+def test_amqp_ping(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CLI ping with amqp:// BAE uses RabbitClient."""
+    monkeypatch.setenv("BITCASTER_BAE", "amqp://user:pass@localhost:5672/")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["ping"])
+    assert result.exit_code == 0
+    assert "connected" in result.output
+
+
+def test_amqp_list_events_errors(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CLI list commands with amqp:// BAE raise NotImplementedError."""
+    monkeypatch.setenv("BITCASTER_BAE", "amqp://user:pass@localhost:5672/")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["events", "-p", "x", "-a", "y"])
+    assert result.exit_code != 0
+    assert "only publishes events" in result.output
