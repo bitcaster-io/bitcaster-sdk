@@ -335,3 +335,21 @@ def test_amqp_trigger(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> N
     channel = fake_pika.channels[-1]
     _exchange, _routing_key, body, _properties = channel.published[-1]
     assert json.loads(body) == {"event": "a1", "data": {"foo": "bar"}}
+
+
+def test_amqp_ping(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CLI ping with amqp:// BAE uses RabbitClient."""
+    monkeypatch.setenv("BITCASTER_BAE", "amqp://user:pass@localhost:5672/")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["ping"])
+    assert result.exit_code == 0
+    assert "connected" in result.output
+
+
+def test_amqp_list_events_errors(fake_pika: FakePika, monkeypatch: pytest.MonkeyPatch) -> None:
+    """CLI list commands with amqp:// BAE raise NotImplementedError."""
+    monkeypatch.setenv("BITCASTER_BAE", "amqp://user:pass@localhost:5672/")
+    runner = CliRunner()
+    result = runner.invoke(cli, ["events", "-p", "x", "-a", "y"])
+    assert result.exit_code != 0
+    assert "only publishes events" in result.output

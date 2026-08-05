@@ -83,6 +83,21 @@ client.trigger_event("event-slug", context={"order_id": "456"})
 
 See the [RabbitMQ Client](rabbit-client.md) page for details.
 
+### Publish via CLI to RabbitMQ
+
+Set `BITCASTER_BAE` to an `amqp://` URL and run `trigger`:
+
+```bash
+export BITCASTER_BAE=amqp://user:password@localhost:5672/
+export BITCASTER_PROJECT=my-project
+export BITCASTER_APPLICATION=my-app
+bitcaster trigger event-slug --context order_id 456
+```
+
+Optionally tune queue/exchange/routing_key via `BITCASTER_QUEUE`,
+`BITCASTER_EXCHANGE`, `BITCASTER_ROUTING_KEY`. Only `trigger` and `ping`
+work with an AMQP BAE; listing commands raise an error.
+
 ## Ping the server
 
 Check connectivity:

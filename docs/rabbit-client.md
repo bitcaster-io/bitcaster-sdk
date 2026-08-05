@@ -61,3 +61,41 @@ print(client.ping())
 The HTTP-only methods (`list_projects`, `list_users`, `add_user`, ...) are
 not available on this client and raise `NotImplementedError`; use the
 [Sync Client](client.md) for the REST API.
+
+## Module-level API
+
+When `bitcaster_sdk.init()` receives an `amqp://` URL it automatically
+creates a `RabbitClient` instead of an HTTP client:
+
+```python
+import bitcaster_sdk
+
+bitcaster_sdk.init("amqp://user:password@localhost:5672/")
+bitcaster_sdk.set_domain("my-project", "my-app")
+bitcaster_sdk.trigger_event("order-placed", context={"order_id": "456"})
+```
+
+The queue, exchange, routing key, and event field can be tuned via
+environment variables:
+
+```bash
+export BITCASTER_QUEUE=bitcaster-events
+export BITCASTER_EXCHANGE=events_exchange
+export BITCASTER_ROUTING_KEY=rk
+export BITCASTER_EVENT_FIELD=event
+```
+
+## CLI usage
+
+Set `BITCASTER_BAE` to an `amqp://` URL and the CLI `trigger` command
+publishes to RabbitMQ instead of the HTTP API:
+
+```bash
+export BITCASTER_BAE=amqp://user:password@localhost:5672/
+export BITCASTER_PROJECT=my-project
+export BITCASTER_APPLICATION=my-app
+bitcaster trigger order-placed --context order_id 456
+```
+
+Listing commands (`projects`, `events`, `users`, etc.) raise an error
+under an AMQP BAE because they require the HTTP API.
