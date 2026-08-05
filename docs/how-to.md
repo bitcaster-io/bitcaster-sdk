@@ -68,6 +68,21 @@ client.flush()
 For the full API reference see the [Sync Client](client.md) and
 [Async Client](async-client.md) pages.
 
+### Publish to a RabbitMQ queue
+
+Trigger events through a RabbitMQ queue consumed by the Bitcaster `AgentAMQP`
+monitor instead of the HTTP API. Requires `pip install bitcaster-sdk[amqp]`:
+
+```python
+from bitcaster_sdk.rabbit_client import RabbitClient
+
+client = RabbitClient("amqp://user:password@localhost:5672/", queue="bitcaster-events")
+client.set_domain("project-slug", "application-slug")
+client.trigger_event("event-slug", context={"order_id": "456"})
+```
+
+See the [RabbitMQ Client](rabbit-client.md) page for details.
+
 ## Ping the server
 
 Check connectivity:
