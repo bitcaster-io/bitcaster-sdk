@@ -18,6 +18,12 @@ Set your Bitcaster endpoint as an environment variable:
 export BITCASTER_BAE=https://<API_KEY>@<SERVER>/api/o/<organization_slug>/
 ```
 
+You can also embed a default project and application in the BAE:
+
+```bash
+export BITCASTER_BAE=https://<API_KEY>@<SERVER>/api/o/<organization_slug>/?project=my-project&application=my-app
+```
+
 Or pass the URL directly when creating a client.
 
 ## Trigger an event
@@ -42,10 +48,12 @@ client.set_domain("project", "app")
 client.trigger_event("event", context={"order_id": "456"})
 ```
 
-Or set project/application at construction time:
+Or set project/application at construction time (via constructor args or baked into the BAE URL):
 
 ```python
 client = Client("https://key@server/api/o/org/", project="project", application="app")
+# Equivalent via query parameters:
+client = Client("https://key@server/api/o/org/?project=project&application=app")
 client.trigger_event("event", context={"order_id": "456"})
 ```
 
@@ -91,6 +99,13 @@ Set `BITCASTER_BAE` to an `amqp://` URL and run `trigger`:
 export BITCASTER_BAE=amqp://user:password@localhost:5672/
 export BITCASTER_PROJECT=my-project
 export BITCASTER_APPLICATION=my-app
+bitcaster trigger event-slug --context order_id 456
+```
+
+For HTTP BAEs you can also embed project and application in the URL:
+
+```bash
+export BITCASTER_BAE=https://key@server/api/o/org/?project=my-project&application=my-app
 bitcaster trigger event-slug --context order_id 456
 ```
 

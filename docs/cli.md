@@ -14,6 +14,12 @@ Authentication uses a **BAE** (Bitcaster API Endpoint) — a URL that embeds the
 https://<API_KEY>@<SERVER>/api/o/<organization_slug>/
 ```
 
+You can also embed a default project and application via query parameters:
+
+```
+https://<API_KEY>@<SERVER>/api/o/<organization_slug>/?project=my-project&application=my-app
+```
+
 Provide it via the `BITCASTER_BAE` environment variable or the `--bae` flag:
 
 ```bash
@@ -24,6 +30,8 @@ bitcaster ping
 ```bash
 bitcaster --bae https://key@server/api/o/org/ ping
 ```
+
+When the BAE includes `?project=...&application=...`, the `--project` / `-p` and `--application` / `-a` flags become optional on `events` and `trigger` commands.
 
 ## Global options
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import urllib.parse
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
@@ -72,6 +73,12 @@ class AbstractClient(ABC):
             self.transport = self._transport_class(**self.options)
 
     def parse_url(self, url: str) -> None:
+        query: dict[str, str] = {}
+        if "?" in url:
+            url, qs = url.split("?", 1)
+            for k, v in urllib.parse.parse_qs(qs, keep_blank_values=False).items():
+                if v:
+                    query[k] = v[0]
         if not url.endswith("/"):
             url = url + "/"
         m = re.compile(self.url_regex).match(url)
@@ -82,6 +89,10 @@ must match {self.url_regex}"""
             )
         self.options.update(m.groupdict())
         self.options["base_url"] = self.base_url
+        if self.project is None and "project" in query:
+            self.project = query["project"]
+        if self.application is None and "application" in query:
+            self.application = query["application"]
 
     @property
     def base_url(self) -> str:

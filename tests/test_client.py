@@ -62,6 +62,35 @@ def test_client_parse_url(client: "Client") -> None:
         client.parse_url("")
 
 
+def test_parse_url_with_query_params(bae: str) -> None:
+    """BAE with ?project=...&application=... sets domain on the client."""
+    client = Client(f"{bae}?project=p1&application=a1")
+    assert client.project == "p1"
+    assert client.application == "a1"
+    assert client.base_url.endswith("/api/o/os4d/")
+
+
+def test_parse_url_query_params_do_not_affect_base_url(bae: str) -> None:
+    """The query string is stripped from the base_url and api_url."""
+    client = Client(f"{bae}?project=p1&application=a1")
+    assert client.base_url == "http://app.bitcaster.io/api/o/os4d/"
+    assert client.api_url == "http://app.bitcaster.io/api/"
+
+
+def test_constructor_args_override_query_params(bae: str) -> None:
+    """Explicit project/application args win over query-param defaults."""
+    client = Client(f"{bae}?project=p1&application=a1", project="explicit-p", application="explicit-a")
+    assert client.project == "explicit-p"
+    assert client.application == "explicit-a"
+
+
+def test_plain_bae_no_query(bae: str) -> None:
+    """A BAE without query string leaves project/application as None."""
+    client = Client(bae)
+    assert client.project is None
+    assert client.application is None
+
+
 def test_client_configures_transport_timeout(bae: str) -> None:
     client = Client(bae, timeout=7)
 

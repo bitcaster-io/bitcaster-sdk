@@ -161,12 +161,12 @@ def members(ctx: Context, project: str, distribution: str, json_output: bool = F
 
 @cli.command(name="events", help="lists Application's Events")
 @click.option(
-    "--project", "-p", required=True, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster default Project"
+    "--project", "-p", required=False, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster default Project"
 )
 @click.option(
     "--application",
     "-a",
-    required=True,
+    required=False,
     envvar="BITCASTER_APPLICATION",
     metavar="APPLICATION",
     help="Bitcaster default Application",
@@ -178,6 +178,13 @@ def events(ctx: Context, project: str, application: str, json_output: bool = Fal
     fmt = "{:>5}: {:<20} {:<20} {:^8} {:^8} {}"
 
     try:
+        c = client.ctx.get()
+        project = project or c.project
+        application = application or c.application
+        if not project or not application:
+            raise click.ClickException(
+                "Missing project/application: pass -p/-a or set ?project=&application= in the BAE"
+            )
         ret = bitcaster_sdk.list_events(project, application)
         if ctx.obj["json"]:
             echo(json.dumps(ret, indent=2))
@@ -227,12 +234,12 @@ def ping(ctx: Context, json_output: bool = False) -> None:
 
 @click.argument("event")
 @click.option(
-    "--project", "-p", required=True, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster default Project"
+    "--project", "-p", required=False, envvar="BITCASTER_PROJECT", metavar="PROJECT", help="Bitcaster default Project"
 )
 @click.option(
     "--application",
     "-a",
-    required=True,
+    required=False,
     envvar="BITCASTER_APPLICATION",
     metavar="APPLICATION",
     help="Bitcaster default Application",
@@ -258,6 +265,13 @@ def trigger(
         echo(f"Context: {dict(context)}")
         echo(f"Options: {dict(options)}")
     try:
+        c = client.ctx.get()
+        project = project or c.project
+        application = application or c.application
+        if not project or not application:
+            raise click.ClickException(
+                "Missing project/application: pass -p/-a or set ?project=&application= in the BAE"
+            )
         ret = bitcaster_sdk.trigger(project, application, event, dict(context), dict(options))
         if ctx.obj["json"]:
             echo(json.dumps(ret, indent=2))

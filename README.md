@@ -14,12 +14,20 @@ Set your Bitcaster API endpoint:
 export BITCASTER_BAE=https://<API_KEY>@<SERVER>/api/o/<organization_slug>/
 ```
 
+You can embed a default project and application in the BAE via query parameters:
+
+```
+export BITCASTER_BAE=https://<API_KEY>@<SERVER>/api/o/<organization_slug>/?project=my-project&application=my-app
+```
+
 ### Sync client
 
 ```python
 from bitcaster_sdk import Client
 
 client = Client("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/")
+# Or with defaults baked in:
+client = Client("https://<API_KEY>@<SERVER>/api/o/<organization_slug>/?project=my-project&application=my-app")
 client.set_domain("my-project", "my-app")
 
 result = client.trigger_event("order.created", context={"id": "abc-123"})
