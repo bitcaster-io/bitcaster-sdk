@@ -121,3 +121,16 @@ class TestDebug:
 
     def test_default_debug_false(self, transport: AsyncTransport) -> None:
         assert not transport.debug
+
+    def test_debug_logs_all_http_methods(self) -> None:
+        transport = AsyncTransport("http://app.bitcaster.io/api/o/os4d/", "key-11", debug=True)
+        with responses_lib.RequestsMock() as rsps:
+            rsps.add(responses_lib.GET, "http://app.bitcaster.io/api/o/os4d/p/", json=[])
+            rsps.add(responses_lib.POST, "http://app.bitcaster.io/api/o/os4d/u/", json={"ok": True})
+            rsps.add(responses_lib.PATCH, "http://app.bitcaster.io/api/o/os4d/u/x/", json={"ok": True})
+            rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/x/", json={"ok": True})
+
+            assert transport.get("p/").result(timeout=5).json() == []
+            assert transport.post("u/", {}).result(timeout=5).json() == {"ok": True}
+            assert transport.patch("u/x/", {}).result(timeout=5).json() == {"ok": True}
+            assert transport.put("u/x/", {}).result(timeout=5).json() == {"ok": True}
