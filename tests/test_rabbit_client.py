@@ -193,6 +193,10 @@ def test_http_only_methods_not_supported(fake_pika: FakePika) -> None:
         client.add_user("user@example.com", "First", "Last")
     with pytest.raises(NotImplementedError):
         client.update_user("user@example.com", "First", "Last")
+    with pytest.raises(NotImplementedError):
+        client.register_user("bitcaster", "bitcaster", "user1")
+    with pytest.raises(NotImplementedError):
+        client.unregister_user("bitcaster", "bitcaster", "user1")
 
 
 def test_trigger_raises_connection_error_on_publish_failure(fake_pika: FakePika) -> None:

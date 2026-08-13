@@ -115,6 +115,8 @@ client.close()
         - trigger_event
         - add_user
         - update_user
+        - register_user
+        - unregister_user
         - flush
         - close
 

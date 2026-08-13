@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from concurrent.futures import Future
+from typing import Any, Callable
+
 import pytest
 import responses as responses_lib
 from requests.exceptions import ReadTimeout
@@ -205,6 +208,84 @@ class TestAddUpdateUser:
         future = client.update_user("new@b.com", "Updated", "")
         result = future.result(timeout=5)
         assert result["first_name"] == "Updated"
+
+
+def _submit_after_closing(client: AsyncClient) -> None:
+    """Make the transport run submitted work synchronously, after dropping client.transport.
+
+    Simulates a request whose execution starts only after the client has been
+    shut down: the closure must fail with RuntimeError instead of using a
+    dead transport.
+    """
+    transport = client.transport
+
+    def submit(fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Future[Any]:
+        client.transport = None
+        future: Future[Any] = Future()
+        try:
+            future.set_result(fn(*args, **kwargs))
+        except Exception as e:  # noqa: BLE001
+            future.set_exception(e)
+        return future
+
+    transport.submit = submit  # type: ignore[method-assign]
+
+
+class TestTransportClosedBeforeExecution:
+    @pytest.mark.parametrize(
+        "call",
+        [
+            pytest.param(lambda c: c.ping(), id="ping"),
+            pytest.param(lambda c: c.list_events("p", "a"), id="list_events"),
+            pytest.param(lambda c: c.list_users(), id="list_users"),
+            pytest.param(lambda c: c.list_projects(), id="list_projects"),
+            pytest.param(lambda c: c.list_applications("p"), id="list_applications"),
+            pytest.param(lambda c: c.list_distribution_lists("p"), id="list_distribution_lists"),
+            pytest.param(lambda c: c.list_members("p", "1"), id="list_members"),
+            pytest.param(lambda c: c.add_user("a@b.com", "F", "L"), id="add_user"),
+            pytest.param(lambda c: c.update_user("a@b.com", "F", "L"), id="update_user"),
+            pytest.param(lambda c: c.register_user("p", "a", "u1"), id="register_user"),
+            pytest.param(lambda c: c.unregister_user("p", "a", "u1"), id="unregister_user"),
+        ],
+    )
+    def test_methods_fail(self, bae: str, call: Callable[[AsyncClient], Future[Any]]) -> None:
+        client = AsyncClient(bae)
+        _submit_after_closing(client)
+        future = call(client)
+        with pytest.raises(RuntimeError, match="client not initialized"):
+            future.result(timeout=5)
+
+    def test_trigger_fails(self, bae: str) -> None:
+        client = AsyncClient(bae)
+        _submit_after_closing(client)
+        with pytest.warns(DeprecationWarning, match="deprecated"):
+            future = client.trigger("p", "a", "e")
+        with pytest.raises(RuntimeError, match="client not initialized"):
+            future.result(timeout=5)
+
+
+class TestRegisterUser:
+    def test_register_user(self, client_setup) -> None:
+        rsps, client = client_setup
+        url = f"{client.base_url}p/myproject/a/myapp/register/"
+        rsps.add(responses_lib.POST, url, json={"created": True, "user": {"username": "u1"}}, status=201)
+        future = client.register_user(
+            "myproject",
+            "myapp",
+            "u1",
+            email="u1@b.com",
+            addresses=[{"value": "u1@b.com", "assign_to_preferred_channel": True}],
+        )
+        result = future.result(timeout=5)
+        assert result["created"]
+
+    def test_unregister_user(self, client_setup) -> None:
+        rsps, client = client_setup
+        url = f"{client.base_url}p/myproject/a/myapp/unregister/u1/"
+        rsps.add(responses_lib.POST, url, json={"deleted": 1}, status=200)
+        future = client.unregister_user("myproject", "myapp", "u1")
+        result = future.result(timeout=5)
+        assert result == {"deleted": 1}
 
 
 class TestTimeout:

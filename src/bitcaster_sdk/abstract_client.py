@@ -207,3 +207,21 @@ must match {self.url_regex}"""
         custom_fields: JSON | None = None,
         mode: str = "ignore",
     ) -> Any: ...
+
+    @abstractmethod
+    def register_user(
+        self,
+        project: str,
+        application: str,
+        username: str,
+        first_name: str = "",
+        last_name: str = "",
+        email: str = "",
+        custom_fields: JSON | None = None,
+        active: bool = True,
+        addresses: list[dict[str, Any]] | None = None,
+        distribution_list: str | None = None,
+    ) -> Any: ...
+
+    @abstractmethod
+    def unregister_user(self, project: str, application: str, username: str) -> Any: ...
