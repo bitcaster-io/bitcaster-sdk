@@ -353,5 +353,5 @@ def serve(ctx: Context, port: int, response_code: int, response_body: str) -> No
         raise click.ClickException(f"Failed to start server: {e}") from None
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     cli(obj={}, auto_envvar_prefix="BITCASTER")

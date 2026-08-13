@@ -22,7 +22,7 @@ class AbstractTransport(ABC):
         self.last_url = ""
 
     def get_url(self, path: str) -> str:
-        if path.startswith("http:"):
+        if path.startswith(("http://", "https://")):
             return path
         if path.startswith("/"):
             return f"{self.conn.scheme}://{self.conn.netloc}{path}"
@@ -32,8 +32,10 @@ class AbstractTransport(ABC):
     def with_headers(self, values: dict[str, str]) -> Iterator[None]:
         c = dict(self.session.headers)
         self.session.headers.update(values)
-        yield
-        self.session.headers = c
+        try:
+            yield
+        finally:
+            self.session.headers = c
 
     @abstractmethod
     def get(self, path: str) -> Any: ...

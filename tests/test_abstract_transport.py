@@ -52,12 +52,21 @@ class TestGetUrl:
     def test_full_url(self, transport: _ConcreteTransport) -> None:
         assert transport.get_url("http://other.com/api/") == "http://other.com/api/"
 
+    def test_full_https_url(self, transport: _ConcreteTransport) -> None:
+        assert transport.get_url("https://other.com/api/") == "https://other.com/api/"
+
 
 class TestWithHeaders:
     def test_headers_restored(self, transport: _ConcreteTransport) -> None:
         original = dict(transport.session.headers)
         with transport.with_headers({"X-Test": "val"}):
             assert transport.session.headers.get("X-Test") == "val"
+        assert transport.session.headers == original
+
+    def test_headers_restored_on_exception(self, transport: _ConcreteTransport) -> None:
+        original = dict(transport.session.headers)
+        with pytest.raises(RuntimeError, match="boom"), transport.with_headers({"X-Test": "val"}):
+            raise RuntimeError("boom")
         assert transport.session.headers == original
 
 
