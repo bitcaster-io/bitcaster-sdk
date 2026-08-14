@@ -38,16 +38,16 @@ class AbstractTransport(ABC):
             self.session.headers = c
 
     @abstractmethod
-    def get(self, path: str) -> Any: ...
+    def get(self, path: str) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def post(self, path: str, arguments: dict[str, Any]) -> Any: ...
+    def post(self, path: str, arguments: dict[str, Any]) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def patch(self, path: str, arguments: dict[str, Any]) -> Any: ...
+    def patch(self, path: str, arguments: dict[str, Any]) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def put(self, path: str, arguments: dict[str, Any]) -> Any: ...
+    def put(self, path: str, arguments: dict[str, Any]) -> Any: ...  # pragma: no cover
 
     def submit(self, fn: Any, *args: Any, **kwargs: Any) -> Future[Any]:
         raise NotImplementedError
