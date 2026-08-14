@@ -222,3 +222,15 @@ def test_thread_safety() -> None:
         t.join()
     q.join()
     assert sorted(results) == list(range(n))
+
+
+def test_put_negative_timeout_raises() -> None:
+    q: Queue = Queue(maxsize=1)
+    with pytest.raises(ValueError, match="non-negative"):
+        q.put("a", timeout=-1)
+
+
+def test_get_negative_timeout_raises() -> None:
+    q: Queue = Queue()
+    with pytest.raises(ValueError, match="non-negative"):
+        q.get(timeout=-1)

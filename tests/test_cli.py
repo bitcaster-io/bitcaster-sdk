@@ -353,3 +353,98 @@ def test_amqp_list_events_errors(fake_pika: FakePika, monkeypatch: pytest.Monkey
     result = runner.invoke(cli, ["events", "-p", "x", "-a", "y"])
     assert result.exit_code != 0
     assert "only publishes events" in result.output
+
+
+def test_cli_requires_bae(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("BITCASTER_BAE", raising=False)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["ping"])
+    assert result.exit_code != 0
+    assert "Failed to initialize" in result.output
+
+
+@pytest.mark.parametrize("status", [401, 404, 500])
+@pytest.mark.parametrize(
+    ("args", "path"),
+    [
+        (["projects"], "p/"),
+        (["lists", "-p", "bitcaster"], "p/bitcaster/d/"),
+        (["applications", "-p", "bitcaster"], "p/bitcaster/a/"),
+        (["members", "-p", "bitcaster", "-d", "1"], "p/bitcaster/d/1/m/"),
+        (["events", "-p", "bitcaster", "-a", "bitcaster"], "p/bitcaster/a/bitcaster/e/"),
+    ],
+)
+def test_list_commands_error_handling(
+    client_setup: Tuple[RequestsMock, Client], args: List[str], path: str, status: int
+) -> None:
+    responses, client = client_setup
+    responses.add(responses.GET, f"{client.base_url}{path}", json={"detail": "err"}, status=status)
+    runner = CliRunner()
+    result = runner.invoke(cli, args)
+    assert result.exit_code != 0
+
+
+def test_ping_error_handling(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    responses.add(responses.GET, f"{client.api_url}system/ping/", json={}, status=500)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["ping"])
+    assert result.exit_code != 0
+
+
+def test_trigger_error_handling(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/a1/trigger/"
+    responses.add(responses.POST, url, json={}, status=500)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["trigger", "a1", "-p", "bitcaster", "-a", "bitcaster"])
+    assert result.exit_code != 0
+
+
+def test_users_list_error_handling(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    responses.add(responses.GET, f"{client.base_url}u/", json={}, status=500)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["users", "list"])
+    assert result.exit_code != 0
+
+
+def test_users_add_invalid_custom_fields(client_setup: Tuple[RequestsMock, Client]) -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["users", "add", "new@b.com", "--custom", "not-json"])
+    assert result.exit_code != 0
+    assert "valid json" in result.output
+
+
+def test_users_update_invalid_custom_fields(client_setup: Tuple[RequestsMock, Client]) -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["users", "update", "new@b.com", "--custom", "not-json"])
+    assert result.exit_code != 0
+    assert "valid json" in result.output
+
+
+def test_users_update_validation_error(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}u/new%40b.com/"
+    responses.add(responses.PATCH, url, json={"email": ["invalid"]}, status=400)
+    runner = CliRunner()
+    result = runner.invoke(cli, ["users", "update", "new@b.com", "-f", "First"])
+    assert result.exit_code == 1
+    assert "Invalid request" in result.output
+
+
+@pytest.mark.parametrize(
+    ("args", "path"),
+    [
+        (["projects"], "p/"),
+        (["applications", "-p", "bitcaster"], "p/bitcaster/a/"),
+    ],
+)
+def test_list_commands_debug_output(client_setup: Tuple[RequestsMock, Client], args: List[str], path: str) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}{path}"
+    responses.add(responses.GET, url, json=[{"slug": "s1", "name": "N1"}])
+    runner = CliRunner()
+    result = runner.invoke(cli, ["--debug", *args])
+    assert result.exit_code == 0
+    assert url in result.output

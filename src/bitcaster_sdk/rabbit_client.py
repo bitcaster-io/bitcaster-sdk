@@ -207,3 +207,21 @@ class RabbitClient(AbstractClient):
         mode: str = "ignore",
     ) -> Any:
         raise NotImplementedError("RabbitClient only publishes events; use the HTTP Client to update users")
+
+    def register_user(
+        self,
+        project: str,
+        application: str,
+        username: str,
+        first_name: str = "",
+        last_name: str = "",
+        email: str = "",
+        custom_fields: Any = None,
+        active: bool = True,
+        addresses: Any = None,
+        distribution_list: str | None = None,
+    ) -> Any:
+        raise NotImplementedError("RabbitClient only publishes events; use the HTTP Client to register users")
+
+    def unregister_user(self, project: str, application: str, username: str) -> Any:
+        raise NotImplementedError("RabbitClient only publishes events; use the HTTP Client to unregister users")

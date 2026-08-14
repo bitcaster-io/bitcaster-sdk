@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Tuple
@@ -10,7 +11,13 @@ import responses as responses_lib
 from requests.exceptions import ReadTimeout
 
 from bitcaster_sdk.client import Client
-from bitcaster_sdk.exceptions import ConfigurationError
+from bitcaster_sdk.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    ConfigurationError,
+    EventNotFoundError,
+    ValidationError,
+)
 from bitcaster_sdk.transport import Transport
 
 if TYPE_CHECKING:
@@ -194,6 +201,90 @@ def test_update_user(client_setup: Tuple[RequestsMock, Client]) -> None:
         client.update_user("new@b.com", "Updated", "")
 
 
+def test_register_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/register/"
+    responses.add(responses.POST, url, json={"created": True, "user": {"username": "u1"}}, status=201)
+    res = client.register_user(
+        "myproject",
+        "myapp",
+        "u1",
+        first_name="First",
+        last_name="Last",
+        email="u1@b.com",
+        custom_fields={"badge": 42},
+        addresses=[{"value": "u1@b.com", "assign_to_preferred_channel": True}],
+        distribution_list="dl1",
+    )
+    assert res["created"]
+
+    payload = json.loads(responses.calls[0].request.body)
+    assert payload["username"] == "u1"
+    assert payload["custom_fields"] == {"badge": 42}
+    assert payload["addresses"] == [{"value": "u1@b.com", "assign_to_preferred_channel": True}]
+    assert payload["distribution_list"] == "dl1"
+    assert payload["active"] is True
+
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.register_user("myproject", "myapp", "u1")
+
+
+def test_unregister_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/unregister/u1%40b.com/"
+    responses.add(responses.POST, url, json={"deleted": 1})
+    res = client.unregister_user("myproject", "myapp", "u1@b.com")
+    assert res == {"deleted": 1}
+
+    responses.add(responses.POST, url, body=Exception(""))
+    with pytest.raises(Exception, match=".*"):
+        client.unregister_user("myproject", "myapp", "u1@b.com")
+
+
+@pytest.mark.parametrize(
+    ("status", "exc"),
+    [
+        (400, ValidationError),
+        (401, AuthenticationError),
+        (403, AuthorizationError),
+        (404, EventNotFoundError),
+        (500, ConnectionError),
+    ],
+)
+def test_assert_response_raises_typed_exceptions(
+    client_setup: Tuple[RequestsMock, Client], status: int, exc: type[Exception]
+) -> None:
+    responses, client = client_setup
+    responses.add(responses.GET, f"{client.base_url}u/", json={"detail": "err"}, status=status)
+    with pytest.raises(exc):
+        client.list_users()
+
+
+def test_trigger_event_not_found(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/bitcaster/a/bitcaster/e/missing/trigger/"
+    responses.add(responses.POST, url, json={}, status=404)
+    with pytest.warns(DeprecationWarning, match="deprecated"), pytest.raises(EventNotFoundError):
+        client.trigger("bitcaster", "bitcaster", "missing", context={})
+
+
+def test_update_user_validation_error(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}u/new%40b.com/"
+    responses.add(responses.PATCH, url, json={"email": ["invalid"]}, status=400)
+    with pytest.raises(ValidationError):
+        client.update_user("new@b.com", "First", "Last")
+
+
+def test_register_user_validation_error(client_setup: Tuple[RequestsMock, Client]) -> None:
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/register/"
+    responses.add(responses.POST, url, json={"distribution_list": "does not exist"}, status=400)
+    with pytest.raises(ValidationError):
+        client.register_user("myproject", "myapp", "u1", distribution_list="missing")
+
+
 def test_transport_put() -> None:
     transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11", timeout=7)
     with responses_lib.RequestsMock() as rsps:
@@ -201,6 +292,15 @@ def test_transport_put() -> None:
         resp = transport.put("u/", {"email": "a@b.com"})
         assert resp.json() == {"ok": True}
         assert rsps.calls[0].request.req_kwargs["timeout"] == 7
+
+
+def test_transport_debug_logging() -> None:
+    transport = Transport("http://app.bitcaster.io/api/o/os4d/", "key-11", debug=True)
+    with responses_lib.RequestsMock() as rsps:
+        rsps.add(responses_lib.PATCH, "http://app.bitcaster.io/api/o/os4d/u/x/", json={"ok": True})
+        rsps.add(responses_lib.PUT, "http://app.bitcaster.io/api/o/os4d/u/x/", json={"ok": True})
+        assert transport.patch("u/x/", {"first_name": "A"}).json() == {"ok": True}
+        assert transport.put("u/x/", {"email": "a@b.com"}).json() == {"ok": True}
 
 
 class TestDomain:

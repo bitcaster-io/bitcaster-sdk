@@ -280,6 +280,73 @@ class AsyncClient(AbstractClient):
 
         return self._submit(_call)
 
+    def register_user(
+        self,
+        project: str,
+        application: str,
+        username: str,
+        first_name: str = "",
+        last_name: str = "",
+        email: str = "",
+        custom_fields: JSON | None = None,
+        active: bool = True,
+        addresses: list[dict[str, Any]] | None = None,
+        distribution_list: str | None = None,
+    ) -> Future[JSON]:
+        """Register a user as member of an application (async).
+
+        Returns:
+            A Future that resolves to the registration response dict.
+
+        """
+
+        def _call() -> JSON:
+            if self.transport is None:
+                raise RuntimeError("client not initialized")
+            url = self.transport.get_url(f"p/{project}/a/{application}/register/")
+            self.transport.last_url = url
+            with self.transport.with_headers({"Content-Type": "application/json"}):
+                response = self.transport.session.post(
+                    url,
+                    json={
+                        "username": username,
+                        "first_name": first_name or "",
+                        "last_name": last_name or "",
+                        "email": email or "",
+                        "custom_fields": custom_fields or {},
+                        "active": active,
+                        "addresses": addresses or [],
+                        "distribution_list": distribution_list,
+                    },
+                    timeout=self.transport.timeout,
+                )
+            self.assert_response(response)
+            return response.json()
+
+        return self._submit(_call)
+
+    def unregister_user(self, project: str, application: str, username: str) -> Future[JSON]:
+        """Unregister a user from an application (async).
+
+        Returns:
+            A Future that resolves to a dict with ``deleted``, the number of
+            deleted memberships.
+
+        """
+        uid = urllib.parse.quote(username)
+
+        def _call() -> JSON:
+            if self.transport is None:
+                raise RuntimeError("client not initialized")
+            url = self.transport.get_url(f"p/{project}/a/{application}/unregister/{uid}/")
+            self.transport.last_url = url
+            with self.transport.with_headers({"Content-Type": "application/json"}):
+                response = self.transport.session.post(url, json={}, timeout=self.transport.timeout)
+            self.assert_response(response)
+            return response.json()
+
+        return self._submit(_call)
+
     def flush(self, timeout: float | None = None) -> bool:
         """Wait for all queued requests to complete.
 

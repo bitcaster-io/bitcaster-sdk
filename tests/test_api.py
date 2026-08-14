@@ -47,6 +47,26 @@ def test_list_applications(client_setup: Tuple[RequestsMock, Client]) -> None:
     assert res == [{"slug": "app1"}]
 
 
+def test_register_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    import bitcaster_sdk
+
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/register/"
+    responses.add(responses.POST, url, json={"created": True, "user": {"username": "u1"}}, status=201)
+    res = bitcaster_sdk.register_user("myproject", "myapp", "u1", email="u1@b.com")
+    assert res["created"]
+
+
+def test_unregister_user(client_setup: Tuple[RequestsMock, Client]) -> None:
+    import bitcaster_sdk
+
+    responses, client = client_setup
+    url = f"{client.base_url}p/myproject/a/myapp/unregister/u1/"
+    responses.add(responses.POST, url, json={"deleted": 1})
+    res = bitcaster_sdk.unregister_user("myproject", "myapp", "u1")
+    assert res == {"deleted": 1}
+
+
 @pytest.mark.parametrize("bae", ["", "aa", "ftp://example.com", "https://example.com"])
 def test_init_error(bae: str) -> None:
     import bitcaster_sdk

@@ -164,25 +164,25 @@ must match {self.url_regex}"""
     # ---- abstract methods ------------------------------------------------
 
     @abstractmethod
-    def ping(self) -> Any: ...
+    def ping(self) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_events(self, project: str, application: str) -> Any: ...
+    def list_events(self, project: str, application: str) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_users(self) -> Any: ...
+    def list_users(self) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_distribution_lists(self, project: str) -> Any: ...
+    def list_distribution_lists(self, project: str) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_projects(self) -> Any: ...
+    def list_projects(self) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_applications(self, project: str) -> Any: ...
+    def list_applications(self, project: str) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def list_members(self, project: str, distribution_list: str) -> Any: ...
+    def list_members(self, project: str, distribution_list: str) -> Any: ...  # pragma: no cover
 
     @abstractmethod
     def trigger(
@@ -193,10 +193,10 @@ must match {self.url_regex}"""
         context: dict[str, str] | None = None,
         options: dict[str, str] | None = None,
         cid: str | None = None,
-    ) -> Any: ...
+    ) -> Any: ...  # pragma: no cover
 
     @abstractmethod
-    def add_user(self, email: str, first_name: str, last_name: str, custom: JSON | None = None) -> Any: ...
+    def add_user(self, email: str, first_name: str, last_name: str, custom: JSON | None = None) -> Any: ...  # pragma: no cover
 
     @abstractmethod
     def update_user(
@@ -206,4 +206,22 @@ must match {self.url_regex}"""
         last_name: str,
         custom_fields: JSON | None = None,
         mode: str = "ignore",
-    ) -> Any: ...
+    ) -> Any: ...  # pragma: no cover
+
+    @abstractmethod
+    def register_user(
+        self,
+        project: str,
+        application: str,
+        username: str,
+        first_name: str = "",
+        last_name: str = "",
+        email: str = "",
+        custom_fields: JSON | None = None,
+        active: bool = True,
+        addresses: list[dict[str, Any]] | None = None,
+        distribution_list: str | None = None,
+    ) -> Any: ...  # pragma: no cover
+
+    @abstractmethod
+    def unregister_user(self, project: str, application: str, username: str) -> Any: ...  # pragma: no cover

@@ -200,6 +200,66 @@ resp = client.update_user("user@example.com", first_name="Jane", last_name="Smit
 print(resp)
 ```
 
+### Register a user to an application
+
+Register a user as an *Application Member*. The user is created if it does
+not exist, per-application custom fields are merged into the membership, and
+addresses can be created and assigned to the application's preferred
+channels — optionally subscribing the resulting assignments to a
+distribution list:
+
+```python
+from bitcaster_sdk.client import Client
+
+client = Client("https://key@server/api/o/org/")
+resp = client.register_user(
+    "my-project",
+    "my-app",
+    "jane.doe",
+    first_name="Jane",
+    last_name="Doe",
+    email="jane@example.com",
+    custom_fields={"badge": 42},
+    addresses=[
+        {"value": "jane@example.com", "assign_to_preferred_channel": True},
+    ],
+    distribution_list="operators",  # optional
+)
+print(resp["created"], resp["membership"], resp["assignments"])
+```
+
+Each entry in `addresses` accepts:
+
+| Key | Required | Description |
+|---|---|---|
+| `value` | yes | The address value (e.g. an email address or phone number) |
+| `name` | no | A label for the address (defaults to the address type) |
+| `assign_to_preferred_channel` | no | Assign the address to the compatible preferred channels (default `false`) |
+
+### Unregister a user from an application
+
+Remove the user's application membership. Distribution list subscriptions
+are not affected:
+
+```python
+from bitcaster_sdk.client import Client
+
+client = Client("https://key@server/api/o/org/")
+resp = client.unregister_user("my-project", "my-app", "jane.doe")
+print(resp["deleted"])  # number of deleted memberships
+```
+
+Both methods are also available on the [Async Client](async-client.md)
+(returning a `Future`) and as module-level functions:
+
+```python
+import bitcaster_sdk
+
+bitcaster_sdk.init()
+bitcaster_sdk.register_user("my-project", "my-app", "jane.doe", email="jane@example.com")
+bitcaster_sdk.unregister_user("my-project", "my-app", "jane.doe")
+```
+
 ## Context manager (async)
 
 The `AsyncClient` supports the context manager protocol. The background worker is shut down automatically on exit:

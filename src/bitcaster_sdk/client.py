@@ -258,6 +258,92 @@ class Client(AbstractClient):
             logger.exception(e)
             raise
 
+    def register_user(
+        self,
+        project: str,
+        application: str,
+        username: str,
+        first_name: str = "",
+        last_name: str = "",
+        email: str = "",
+        custom_fields: "JSON | None" = None,
+        active: bool = True,
+        addresses: list[dict[str, Any]] | None = None,
+        distribution_list: str | None = None,
+    ) -> "JSON":
+        """Register a user as member of an application.
+
+        Creates the user if it does not exist, stores per-application custom
+        fields, optionally creates addresses, assigns them to the preferred
+        channels and adds the assignments to a distribution list.
+
+        Args:
+            project: Project slug.
+            application: Application slug.
+            username: Username (used as the lookup key; the user is created if missing).
+            first_name: User first name (only used when creating the user).
+            last_name: User last name (only used when creating the user).
+            email: User email address (only used when creating the user).
+            custom_fields: Optional dict of per-application custom fields,
+                merged into the existing membership custom fields.
+            active: Whether the membership is active.
+            addresses: Optional list of address dicts, each with ``value``
+                (required), ``name`` and ``assign_to_preferred_channel``.
+            distribution_list: Optional name of a distribution list the
+                created assignments are added to.
+
+        Returns:
+            The API response dict with ``user``, ``created``, ``membership``,
+            ``addresses``, ``assignments`` and ``distribution_list``.
+
+        """
+        try:
+            response = self.transport.post(
+                f"p/{project}/a/{application}/register/",
+                {
+                    "username": username,
+                    "first_name": first_name or "",
+                    "last_name": last_name or "",
+                    "email": email or "",
+                    "custom_fields": custom_fields or {},
+                    "active": active,
+                    "addresses": addresses or [],
+                    "distribution_list": distribution_list,
+                },
+            )
+            self.assert_response(response)
+            return response.json()
+        except ValidationError:
+            raise
+        except Exception as e:
+            logger.exception(e)
+            raise
+
+    def unregister_user(self, project: str, application: str, username: str) -> "JSON":
+        """Unregister a user from an application.
+
+        Deletes the user's application membership records. Distribution list
+        subscriptions are not affected.
+
+        Args:
+            project: Project slug.
+            application: Application slug.
+            username: Username of the user to unregister.
+
+        Returns:
+            The API response dict with ``deleted``, the number of deleted
+            memberships.
+
+        """
+        try:
+            uid = urllib.parse.quote(username)
+            response = self.transport.post(f"p/{project}/a/{application}/unregister/{uid}/", {})
+            self.assert_response(response)
+            return response.json()
+        except Exception as e:
+            logger.exception(e)
+            raise
+
 
 ctx.set(Client(None))
 
